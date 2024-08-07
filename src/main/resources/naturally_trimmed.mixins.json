@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "net.majo24.naturally_trimmed.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "net.majo24.naturally_trimmed.mixin.ConditionalMixinPlugin",
+  "mixins": [
+    "spawn_entities_trimmed.OnNaturalSpawnMixin",
+    "yacl.CategoryTabOptionListAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
