@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
+
 public class TrimRandomlyFunction extends LootItemConditionalFunction {
     public static final MapCodec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.mapCodec(
             instance -> commonFields(instance)
@@ -45,7 +47,9 @@ public class TrimRandomlyFunction extends LootItemConditionalFunction {
     protected @NotNull ItemStack run(ItemStack stack, LootContext context) {
         RandomSource random = context.getRandom();
 
-        if (/* ()NaturallyTrimmed.configHandler.instance() < random.nextInt(100)) &&*/ !(stack.getItem() instanceof ArmorItem)) {
+        if (!(stack.getItem() instanceof ArmorItem)
+                || !configHandler.instance().trimmedChestLoot.enabled
+                || (configHandler.instance().trimmedChestLoot.trimChance < random.nextInt(100))) {
             return stack;
         }
 
