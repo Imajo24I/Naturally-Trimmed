@@ -13,7 +13,7 @@
     "issues": "${issues_link}"
   },
   "license": "MIT",
-  "icon": "assets/mob_armor_trims/icon.png",
+  "icon": "assets/naturally_trimmed/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

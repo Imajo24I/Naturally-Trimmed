@@ -9,7 +9,7 @@ version = "${version}"
 displayName = "${name}"
 authors = "majo24"
 description = "${description}"
-logoFile = "assets/mob_armor_trims/icon.png"
+logoFile = "./assets/naturally_trimmed/icon.png"
 
 [["dependencies.{id}"]]
 modId = "neoforge"
