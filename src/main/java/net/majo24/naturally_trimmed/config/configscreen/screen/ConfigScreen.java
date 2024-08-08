@@ -1,9 +1,9 @@
 package net.majo24.naturally_trimmed.config.configscreen.screen;
 
 import dev.isxander.yacl3.api.*;
+import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
-import net.majo24.naturally_trimmed.config.Config;
 import net.majo24.naturally_trimmed.config.custom_trim_combinations.CustomTrim;
 import net.majo24.naturally_trimmed.config.custom_trim_combinations.TrimCombination;
 import net.majo24.naturally_trimmed.config.configscreen.Formatters;
@@ -24,7 +24,7 @@ import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 
 /*? <1.21 {*/
 /*import net.minecraft.client.gui.screens.OptionsSubScreen;
-*//*?} else {*/
+ *//*?} else {*/
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 /*?}*/
 
@@ -38,23 +38,32 @@ public class ConfigScreen {
 
     public static Screen getConfigScreen(Screen parent) {
         YetAnotherConfigLib.Builder configScreen = YetAnotherConfigLib.createBuilder()
-                .title(Component.literal("Mob Armor Trims"))
+                .title(Component.literal("Naturally Trimmed"))
                 .save(configHandler::save)
 
-                .category(buildGeneralCategory())
-                .category(buildRandomTrimsCategory())
-                .category(buildCustomTrimsCategory());
+                .category(trimmedMobsCategory())
+                .category(trimmedChestLootCategory());
 
         return configScreen.build().generateScreen(parent);
     }
 
-    private static ConfigCategory buildGeneralCategory() {
+    private static ConfigCategory trimmedMobsCategory() {
         return ConfigCategory.createBuilder()
-                .name(translatable("mob_armor_trims.config.general"))
-                .tooltip(translatable("mob_armor_trims.config.general.tooltip"))
+                .name(translatable("naturally_trimmed.config.trimmed_mobs"))
+                .tooltip(translatable("naturally_trimmed.config.trimmed_mobs.tooltip"))
+                .group(trimmedMobsGeneralGroup())
+                .group(trimmedMobsRandomTrimsGroup())
+                .group(trimmedMobsTrimCombinationsGroup())
+                .build();
+    }
+
+    private static OptionGroup trimmedMobsGeneralGroup() {
+        return OptionGroup.createBuilder()
+                .name(translatable("naturally_trimmed.config.trimmed_mobs.general"))
+                .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.general.description")))
                 .option(Option.<General.TrimSystems>createBuilder()
-                        .name(translatable("mob_armor_trims.config.general.trimSystem"))
-                        .description(OptionDescription.of(translatable("mob_armor_trims.config.general.trimSystem.description")))
+                        .name(translatable("naturally_trimmed.config.trimmed_mobs.general.trimSystem"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.general.trimSystem.description")))
                         .binding(configHandler.defaults().trimmedMobs.general.enabledSystem,
                                 () -> configHandler.instance().trimmedMobs.general.enabledSystem,
                                 enabledSystem -> configHandler.instance().trimmedMobs.general.enabledSystem = enabledSystem)
@@ -64,8 +73,8 @@ public class ConfigScreen {
                         .build())
 
                 .option(Option.<Integer>createBuilder()
-                        .name(translatable("mob_armor_trims.config.general.noTrimsChance"))
-                        .description(OptionDescription.of(translatable("mob_armor_trims.config.general.noTrimsChance.description")))
+                        .name(translatable("naturally_trimmed.config.trimmed_mobs.general.noTrimsChance"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.general.noTrimsChance.description")))
                         .binding(configHandler.defaults().trimmedMobs.general.noTrimsChance,
                                 () -> configHandler.instance().trimmedMobs.general.noTrimsChance,
                                 noTrimsChance -> configHandler.instance().trimmedMobs.general.noTrimsChance = noTrimsChance)
@@ -77,14 +86,14 @@ public class ConfigScreen {
                 .build();
     }
 
-    private static ConfigCategory buildRandomTrimsCategory() {
-        return ConfigCategory.createBuilder()
-                .name(translatable("mob_armor_trims.config.randomTrims"))
-                .tooltip(translatable("mob_armor_trims.config.randomTrims.tooltip"))
+    private static OptionGroup trimmedMobsRandomTrimsGroup() {
+        return OptionGroup.createBuilder()
+                .name(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims"))
+                .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims.description")))
 
                 .option(Option.<Integer>createBuilder()
-                        .name(translatable("mob_armor_trims.config.randomTrims.trimChance"))
-                        .description(OptionDescription.of(translatable("mob_armor_trims.config.randomTrims.trimChance.description")))
+                        .name(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims.trimChance"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims.trimChance.description")))
                         .binding(configHandler.defaults().trimmedMobs.randomTrims.trimChance,
                                 () -> configHandler.instance().trimmedMobs.randomTrims.trimChance,
                                 trimsChance -> configHandler.instance().trimmedMobs.randomTrims.trimChance = trimsChance)
@@ -95,8 +104,8 @@ public class ConfigScreen {
                         .build())
 
                 .option(Option.<Integer>createBuilder()
-                        .name(translatable("mob_armor_trims.config.randomTrims.similarTrimChance"))
-                        .description(OptionDescription.of(translatable("mob_armor_trims.config.randomTrims.similarTrimChance.description")))
+                        .name(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims.similarTrimChance"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.randomTrims.similarTrimChance.description")))
                         .binding(configHandler.defaults().trimmedMobs.randomTrims.similarTrimChance,
                                 () -> configHandler.instance().trimmedMobs.randomTrims.similarTrimChance,
                                 similarTrimChance -> configHandler.instance().trimmedMobs.randomTrims.similarTrimChance = similarTrimChance)
@@ -109,39 +118,60 @@ public class ConfigScreen {
                 .build();
     }
 
-    private static ConfigCategory buildCustomTrimsCategory() {
-        return ConfigCategory.createBuilder()
-                .name(translatable("mob_armor_trims.config.customTrimCombinations"))
-                .tooltip(translatable("mob_armor_trims.config.customTrimCombinations.tooltip"))
-
-                .group(ListOption.<TrimCombination>createBuilder()
-                        .name(translatable("mob_armor_trims.config.customTrimCombinations"))
-                        .description(OptionDescription.of(translatable("mob_armor_trims.config.customTrimCombinations.trimCombinations.description")))
+    private static OptionGroup trimmedMobsTrimCombinationsGroup() {
+        return ListOption.<TrimCombination>createBuilder()
+                        .name(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations.description")))
                         .binding(configHandler.defaults().trimmedMobs.trimCombinations.trimCombinations,
                                 () -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations,
                                 trimCombinations -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations = trimCombinations)
                         .controller(TrimCombinationsController.Builder::create)
                         .initial(new TrimCombination("", CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY))
+                        .build();
+    }
+
+    private static ConfigCategory trimmedChestLootCategory() {
+        return ConfigCategory.createBuilder()
+                .name(translatable("naturally_trimmed.config.trimmed_chest_loot"))
+                .tooltip(translatable("naturally_trimmed.config.trimmed_chest_loot.description"))
+                .option((Option.<Boolean>createBuilder()
+                        .name(translatable("naturally_trimmed.config.trimmed_chest_loot.enabled"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_chest_loot.enabled.description")))
+                        .binding(configHandler.defaults().trimmedChestLoot.enabled,
+                                () -> configHandler.instance().trimmedChestLoot.enabled,
+                                enabled -> configHandler.instance().trimmedChestLoot.enabled = enabled)
+                        .controller(BooleanControllerBuilder::create)
+                        .build()))
+                .option(Option.<Integer>createBuilder()
+                        .name(translatable("naturally_trimmed.config.trimmed_chest_loot.trimChance"))
+                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_chest_loot.trimChance.description")))
+                        .binding(configHandler.defaults().trimmedChestLoot.trimChance,
+                                () -> configHandler.instance().trimmedChestLoot.trimChance,
+                                trimChance -> configHandler.instance().trimmedChestLoot.trimChance = trimChance)
+                        .controller(opt -> IntegerSliderControllerBuilder.create(opt)
+                                .range(0, 100)
+                                .step(1)
+                                .formatValue(integerToPercentageFormatter))
                         .build())
                 .build();
     }
 
-    static class BackupScreen extends OptionsSubScreen {
+    public static class BackupScreen extends OptionsSubScreen {
         public BackupScreen(Screen parent) {
-            super(parent, Minecraft.getInstance().options, Component.literal("Mob Armor Trims"));
+            super(parent, Minecraft.getInstance().options, Component.literal("Naturally Trimmed"));
         }
 
         @Override
         public void init() {
             MultiLineTextWidget messageWidget = new MultiLineTextWidget(
                     width / 2 - 110, height / 2 - 40,
-                    translatable("mob_armor_trims.config.backup_screen.installYACL"),
+                    translatable("naturally_trimmed.config.backup_screen.installYACL"),
                     minecraft.font);
             messageWidget.setMaxWidth(240);
             messageWidget.setCentered(true);
             addRenderableWidget(messageWidget);
 
-            Button openLinkButton = Button.builder(translatable("mob_armor_trims.config.backup_screen.viewOnModrinth"),
+            Button openLinkButton = Button.builder(translatable("naturally_trimmed.config.backup_screen.viewOnModrinth"),
                             button -> minecraft.setScreen(new ConfirmLinkScreen(
                                     open -> {
                                         if (open) Util.getPlatform().openUri("https://modrinth.com/mod/yacl");
@@ -162,7 +192,8 @@ public class ConfigScreen {
 
         //? >=1.21 {
         @Override
-        protected void addOptions() {}
+        protected void addOptions() {
+        }
         //?}
 
         @Override

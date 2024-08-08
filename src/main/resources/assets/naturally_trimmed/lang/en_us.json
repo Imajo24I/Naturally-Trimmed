@@ -1,32 +1,31 @@
 {
-  "mob_armor_trims.config.general": "General",
-  "mob_armor_trims.config.general.tooltip": "General settings for this mod.",
-  "mob_armor_trims.config.general.trimSystem": "Trim System",
-  "mob_armor_trims.config.general.trimSystem.description": "Select the System of how to select, what trims to give mobs.\n- Random Trims: Randomly choose the trim, but also take the previous trim highly into account.\n- Custom Trims: Choose the trim out of a list of custom trims. You can manage the trims yourself",
-  "mob_armor_trims.config.general.noTrimsChance": "No Trims Chance",
-  "mob_armor_trims.config.general.noTrimsChance.description": "Chance of the mob having no trims at all",
+  "naturally_trimmed.config.trimmed_mobs": "Trimmed Mobs",
+  "naturally_trimmed.config.trimmed_mobs.tooltip": "Settings for applying trims on a mobs armor pieces",
 
-  "mob_armor_trims.config.randomTrims": "Random Trims",
-  "mob_armor_trims.config.randomTrims.tooltip": "Settings for the Random Trims System.\nThese settings will only make a difference, if the random trims system is enabled.",
-  "mob_armor_trims.config.randomTrims.trimChance": "Trim Chance",
-  "mob_armor_trims.config.randomTrims.trimChance.description": "Chance of each armor piece of a mob having an armor trim",
-  "mob_armor_trims.config.randomTrims.similarTrimChance": "Similar Trim Chance",
-  "mob_armor_trims.config.randomTrims.similarTrimChance.description": "Chance of each armor piece having a similar armor trim as the previous armor piece",
+  "naturally_trimmed.config.trimmed_mobs.general": "General",
+  "naturally_trimmed.config.trimmed_mobs.general.description": "General settings for this mod.",
+  "naturally_trimmed.config.trimmed_mobs.general.trimSystem": "Trim System",
+  "naturally_trimmed.config.trimmed_mobs.general.trimSystem.description": "Select the System of how to select, what trims to give mobs.\n- Random Trims: Randomly choose the trim, but also take the previous trim highly into account.\n- Custom Trims: Choose the trim out of a list of custom trims. You can manage the trims yourself",
+  "naturally_trimmed.config.trimmed_mobs.general.noTrimsChance": "No Trims Chance",
+  "naturally_trimmed.config.trimmed_mobs.general.noTrimsChance.description": "Chance of the mob having no trims at all",
 
+  "naturally_trimmed.config.trimmed_mobs.randomTrims": "Random Trims",
+  "naturally_trimmed.config.trimmed_mobs.randomTrims.description": "Settings for the Random Trims System.\nThese settings will only make a difference, if the random trims system is enabled.",
+  "naturally_trimmed.config.trimmed_mobs.randomTrims.trimChance": "Trim Chance",
+  "naturally_trimmed.config.trimmed_mobs.randomTrims.trimChance.description": "Chance of each armor piece of a mob having an armor trim",
+  "naturally_trimmed.config.trimmed_mobs.randomTrims.similarTrimChance": "Similar Trim Chance",
+  "naturally_trimmed.config.trimmed_mobs.randomTrims.similarTrimChance.description": "Chance of each armor piece having a similar armor trim as the previous armor piece",
 
-  "mob_armor_trims.config.customTrimCombinations": "Custom Trim Combinations",
-  "mob_armor_trims.config.customTrimCombinations.tooltip": "Settings for the Custom Trim Combinations System.\nThese settings will only make a difference, if the custom trim combinations system is enabled.",
-  "mob_armor_trims.config.customTrimCombinations.trimCombinations.description": "Manage the custom trim combinations here. You can add, edit and remove combinations.\n\nIn the first option, enter the material of the armor, the combination can be applied to.\nAs an example: \"iron\".\n\nIn the rest of the options, enter the Trims for each armor piece.\nIn the left option, enter a valid trim material.\nFor example: \"amethyst_shard\".\nIn the right option, enter a valid trim pattern.\nFor example: \"silence\"\n\nTo not have to specify the whole trim pattern, you can leave out the \"_armor_trim_smithing_template\" part of the pattern, as it is the same for every pattern.\n\nFor each of the options, you'll see a preview. \nHaving a question mark next to the preview, means the mod can't check for the validity of the option in the current environment. This happens when not inside a world.\nIf the preview is a barrier, the option is not valid.",
+  "naturally_trimmed.config.trimmed_mobs.trimCombinations": "Custom Trim Combinations",
+  "naturally_trimmed.config.trimmed_mobs.trimCombinations.description": "Settings for the Custom Trim Combinations System.\nThese settings will only make a difference, if the custom trim combinations system is enabled.\n\nManage the custom trim combinations here. You can add, edit and remove combinations.\n\nIn the first option, enter the material of the armor, the combination can be applied to.\nAs an example: \"iron\".\n\nIn the rest of the options, enter the Trims for each armor piece.\nIn the left option, enter a valid trim material.\nFor example: \"amethyst_shard\".\nIn the right option, enter a valid trim pattern.\nFor example: \"silence\"\n\nTo not have to specify the whole trim pattern, you can leave out the \"_armor_trim_smithing_template\" part of the pattern, as it is the same for every pattern.\n\nFor each of the options, you'll see a preview. \nHaving a question mark next to the preview, means the mod can't check for the validity of the option in the current environment. This happens when not inside a world.\nIf the preview is a barrier, the option is not valid.",
 
+  "naturally_trimmed.config.trimmed_chest_loot": "Trimmed Chest Loot",
+  "naturally_trimmed.config.trimmed_chest_loot.description": "Settings for applying trims on a chests loot",
+  "naturally_trimmed.config.trimmed_chest_loot.enabled": "Enabled",
+  "naturally_trimmed.config.trimmed_chest_loot.enabled.description": "Should apply trims on armor pieces inside a chest",
+  "naturally_trimmed.config.trimmed_chest_loot.trimChance": "Trim Chance",
+  "naturally_trimmed.config.trimmed_chest_loot.trimChance.description": "Chance of each armor piece inside a chest having a trim applied",
 
-  "mob_armor_trims.config.stackedTrims": "Stacked Trims",
-  "mob_armor_trims.config.stackedTrims.tooltip": "Settings for the Stacked Armor Trims mod compatibility.\nThese settings will only make a difference, if the Stacked Armor Trims mod is used and the random trims System is enabled.",
-  "mob_armor_trims.config.stackedTrims.stackedTrimsChance": "Stacked Trim Chance",
-  "mob_armor_trims.config.stackedTrims.stackedTrimsChance.description": "Chance of each armor piece having an additional armor trim on it when the Stacked Armor Trims mod is enabled",
-  "mob_armor_trims.config.stackedTrims.maxStackedTrims": "Max Stacked Trims",
-  "mob_armor_trims.config.stackedTrims.maxStackedTrims.description": "The maximum amount of armor trims that can be stacked on each other when the Stacked Armor Trims mod is enabled",
-
-  "mob_armor_trims.config.backup_screen.installYACL": "Install Yet Another Config Lib to access the config screen.",
-  "mob_armor_trims.config.backup_screen.viewOnModrinth": "View on Modrinth"
-
+  "naturally_trimmed.config.backup_screen.installYACL": "Install Yet Another Config Lib to access the config screen.",
+  "naturally_trimmed.config.backup_screen.viewOnModrinth": "View on Modrinth"
 }
