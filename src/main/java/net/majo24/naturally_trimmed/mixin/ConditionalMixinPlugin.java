@@ -1,10 +1,10 @@
 package net.majo24.naturally_trimmed.mixin;
 /*? if fabric {*/
-import net.fabricmc.loader.api.FabricLoader;
-/*?} else if forge {*/
-/*import net.minecraftforge.fml.loading.LoadingModList;
+/*import net.fabricmc.loader.api.FabricLoader;
+*//*?} else if forge {*/
+import net.minecraftforge.fml.loading.LoadingModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-*//*?} else {*/
+/*?} else {*/
 /*import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 *//*?}*/
@@ -39,10 +39,10 @@ public final class ConditionalMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isYaclPresent() {
         //? if fabric {
-        return FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3");
-        //?} else {
-        /*return LoadingModList.get().getMods().stream().map(ModInfo::getModId).toList().contains("yet_another_config_lib_v3");
-        *///?}
+        /*return FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3");
+        *///?} else {
+        return LoadingModList.get().getMods().stream().map(ModInfo::getModId).toList().contains("yet_another_config_lib_v3");
+        //?}
     }
 
 

@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "plugin": "net.majo24.naturally_trimmed.mixin.ConditionalMixinPlugin",
   "mixins": [
+    "ReloadRegistriesMixin",
     "spawn_entities_trimmed.OnNaturalSpawnMixin",
     "yacl.CategoryTabOptionListAccessor"
   ],

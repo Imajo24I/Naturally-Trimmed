@@ -30,7 +30,6 @@ val mcDep = property("mod.mc_dep")
 
 val modmenuVersion = property("deps.modmenu_version")
 val yaclVersion = findProperty("deps.yacl_version")
-val architecturyVersion = findProperty("deps.architectury_api")
 
 version = "${mod.version}+${mcVersion}-${loader.loader}"
 group = mod.group
@@ -45,6 +44,12 @@ stonecutter {
     )
 }
 
+val accessWidenerName = if (stonecutter.compare(
+        stonecutter.current.version,
+        "1.20.1"
+    ) > 0
+) "naturally_trimmed.accesswidener" else "naturally_trimmed_1.20.1.accesswidener"
+
 loom {
     mods {
         create("naturally_trimmed") {
@@ -54,7 +59,10 @@ loom {
 
     if (isForge) {
         forge.mixinConfigs("naturally_trimmed.mixins.json")
+        forge.convertAccessWideners.set(true)
     }
+
+    accessWidenerPath.set(rootProject.file("src/main/resources/$accessWidenerName"))
 }
 
 repositories {
@@ -96,24 +104,25 @@ dependencies {
         // Mod Menu
         modImplementation("com.terraformersmc:modmenu:${modmenuVersion}")
 
-        if (stonecutter.compare(
-                stonecutter.current.version,
-                "1.21"
-            ) >= 0) {
-            modImplementation("net.fabricmc.fabric-api:fabric-api:0.101.2+1.21")
-        }
+        // modImplementation("net.fabricmc.fabric-api:fabric-api:0.102.0+1.21")
     }
     if (loader.isNeoforge) {
         "neoForge"("net.neoforged:neoforge:${findProperty("deps.neoforge")}")
 
         // YACL
-        implementation("dev.isxander:yet-another-config-lib:${yaclVersion}+${mcVersion}-neoforge") {isTransitive = false}
+        implementation("dev.isxander:yet-another-config-lib:${yaclVersion}+${mcVersion}-neoforge") {
+            isTransitive = false
+        }
     }
     if (loader.isForge) {
         "forge"("net.minecraftforge:forge:${property("deps.forge")}")
 
         // YACL
         compileOnly("dev.isxander:yet-another-config-lib:${yaclVersion}+${mcVersion}-forge")
+
+        // Mixin Extras
+        compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1")!!)
+        implementation(include("io.github.llamalad7:mixinextras-forge:0.4.1")!!)
     }
 }
 
@@ -126,53 +135,61 @@ loom {
 
 java {
     val java = if (stonecutter.compare(
-                stonecutter.current.version,
-                "1.20.6"
-            ) >= 0
-        ) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
+            stonecutter.current.version,
+            "1.20.6"
+        ) >= 0
+    ) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
     sourceCompatibility = java
     targetCompatibility = java
     withSourcesJar()
 }
 
-tasks.processResources {
-    val props = buildMap {
-        put("id", mod.id)
-        put("name", mod.name)
-        put("version", mod.version)
-        put("mcdep", mcDep)
-        put("description", mod.description)
-        put("github_link", mod.githubLink)
-        put("issues_link", mod.issuesLink)
-        put("modmenu_version", modmenuVersion)
-        put("yacl_version", yaclVersion)
+tasks {
+    processResources {
+        val props = buildMap {
+            put("id", mod.id)
+            put("name", mod.name)
+            put("version", mod.version)
+            put("mcdep", mcDep)
+            put("description", mod.description)
+            put("github_link", mod.githubLink)
+            put("issues_link", mod.issuesLink)
+            put("modmenu_version", modmenuVersion)
+            put("yacl_version", yaclVersion)
 
-        if (loader.isForgeLike) {
-            put("forgeConstraint", findProperty("modstoml.forge_constraint"))
+            if (loader.isForgeLike) {
+                put("forgeConstraint", findProperty("modstoml.forge_constraint"))
+            }
+            if (mcVersion == "1.20.1" || mcVersion == "1.20.4") {
+                put("forge_id", loader.loader)
+            }
         }
-        if (mcVersion == "1.20.1" || mcVersion == "1.20.4") {
-            put("forge_id", loader.loader)
+
+        props.forEach(inputs::property)
+
+        if (loader.isFabric) {
+            filesMatching("fabric.mod.json") { expand(props) }
+            exclude(listOf("META-INF/mods.toml", "META-INF/neoforge.mods.toml"))
         }
-    }
+        if (loader.isForge) {
+            filesMatching("META-INF/mods.toml") { expand(props) }
+            exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
+        }
 
-    props.forEach(inputs::property)
-
-    if (loader.isFabric) {
-        filesMatching("fabric.mod.json") { expand(props) }
-        exclude(listOf("META-INF/mods.toml", "META-INF/neoforge.mods.toml"))
-    }
-    if (loader.isForge) {
-        filesMatching("META-INF/mods.toml") { expand(props) }
-        exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
+        if (loader.isNeoforge) {
+            if (mcVersion == "1.20.4") {
+                filesMatching("META-INF/mods.toml") { expand(props) }
+                exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
+            } else {
+                filesMatching("META-INF/neoforge.mods.toml") { expand(props) }
+                exclude("fabric.mod.json", "META-INF/mods.toml")
+            }
+        }
     }
 
     if (loader.isNeoforge) {
-        if (mcVersion == "1.20.4") {
-            filesMatching("META-INF/mods.toml") { expand(props) }
-            exclude("fabric.mod.json", "META-INF/neoforge.mods.toml")
-        } else {
-            filesMatching("META-INF/neoforge.mods.toml") { expand(props) }
-            exclude("fabric.mod.json", "META-INF/mods.toml")
+        remapJar {
+            atAccessWideners.add(accessWidenerName)
         }
     }
 }
@@ -220,7 +237,7 @@ publishMods {
 }
 
 fun <T> optionalProp(property: String, block: (String) -> T?): T? =
-    findProperty(property)?.toString()?.takeUnless { it.isBlank() }?.let(block)
+    findProperty(property)?.toString()?.takeUnless { it.isNullOrBlank() }?.let(block)
 
 fun isPropDefined(property: String): Boolean {
     return property(property)?.toString()?.isNotBlank() ?: false

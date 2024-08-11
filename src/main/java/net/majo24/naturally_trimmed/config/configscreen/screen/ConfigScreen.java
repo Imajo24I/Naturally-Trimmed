@@ -23,15 +23,18 @@ import org.jetbrains.annotations.NotNull;
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 
 /*? <1.21 {*/
-/*import net.minecraft.client.gui.screens.OptionsSubScreen;
- *//*?} else {*/
-import net.minecraft.client.gui.screens.options.OptionsSubScreen;
-/*?}*/
+import net.minecraft.client.gui.screens.OptionsSubScreen;
+ /*?} else {*/
+/*import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+*//*?}*/
+
+import java.util.List;
 
 import static net.minecraft.network.chat.Component.translatable;
 
 public class ConfigScreen {
-    private ConfigScreen() {}
+    private ConfigScreen() {
+    }
 
     public static final Formatters.IntegerToPercentage integerToPercentageFormatter = new Formatters.IntegerToPercentage();
     public static final Formatters.TrimSystem trimSystemFormatter = new Formatters.TrimSystem();
@@ -41,8 +44,10 @@ public class ConfigScreen {
                 .title(Component.literal("Naturally Trimmed"))
                 .save(configHandler::save)
 
-                .category(trimmedMobsCategory())
-                .category(trimmedChestLootCategory());
+                .categories(List.of(
+                        trimmedMobsCategory(),
+                        trimmedChestLootCategory()
+                ));
 
         return configScreen.build().generateScreen(parent);
     }
@@ -120,14 +125,14 @@ public class ConfigScreen {
 
     private static OptionGroup trimmedMobsTrimCombinationsGroup() {
         return ListOption.<TrimCombination>createBuilder()
-                        .name(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations"))
-                        .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations.description")))
-                        .binding(configHandler.defaults().trimmedMobs.trimCombinations.trimCombinations,
-                                () -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations,
-                                trimCombinations -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations = trimCombinations)
-                        .controller(TrimCombinationsController.Builder::create)
-                        .initial(new TrimCombination("", CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY))
-                        .build();
+                .name(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations"))
+                .description(OptionDescription.of(translatable("naturally_trimmed.config.trimmed_mobs.trimCombinations.description")))
+                .binding(configHandler.defaults().trimmedMobs.trimCombinations.trimCombinations,
+                        () -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations,
+                        trimCombinations -> configHandler.instance().trimmedMobs.trimCombinations.trimCombinations = trimCombinations)
+                .controller(TrimCombinationsController.Builder::create)
+                .initial(new TrimCombination("", CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY, CustomTrim.EMPTY))
+                .build();
     }
 
     private static ConfigCategory trimmedChestLootCategory() {
@@ -191,15 +196,15 @@ public class ConfigScreen {
         }
 
         //? >=1.21 {
-        @Override
+        /*@Override
         protected void addOptions() {
         }
-        //?}
+        *///?}
 
         @Override
         public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             //? <=1.20.1
-            /*renderDirtBackground(graphics);*/
+            renderDirtBackground(graphics);
             super.render(graphics, mouseX, mouseY, delta);
             graphics.drawCenteredString(font, title, width / 2, 5, 0xffffff);
         }

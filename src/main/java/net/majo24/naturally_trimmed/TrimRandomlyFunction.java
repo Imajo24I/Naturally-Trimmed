@@ -1,5 +1,9 @@
 package net.majo24.naturally_trimmed;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Registry;
@@ -12,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.armortrim.TrimMaterial;
 import net.minecraft.world.item.armortrim.TrimPattern;
 import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.functions.EnchantRandomlyFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
@@ -19,21 +24,35 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 
 public class TrimRandomlyFunction extends LootItemConditionalFunction {
-    public static final MapCodec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.mapCodec(
+    //? if >1.20.1 {
+    /*public static final
+            //? if >1.20.4 {
+    /^MapCodec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.mapCodec(
+     ^///?} else {
+            /^Codec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.create(
+            ^///?}
             instance -> commonFields(instance)
                     .apply(instance, TrimRandomlyFunction::new)
     );
+    *///?}
 
-    protected TrimRandomlyFunction(List<LootItemCondition> predicates) {
+    protected TrimRandomlyFunction(
+            //? if >1.20.1 {
+            /*List<LootItemCondition>
+             *///?} else {
+            LootItemCondition[]
+            //?}
+                    predicates) {
         super(predicates);
     }
 
     @Override
-    public @NotNull LootItemFunctionType<? extends LootItemConditionalFunction> getType() {
+    public @NotNull LootItemFunctionType getType() {
         return NaturallyTrimmed.TRIM_RANDOMLY_FUNCTION;
     }
 
@@ -80,4 +99,13 @@ public class TrimRandomlyFunction extends LootItemConditionalFunction {
             return new TrimRandomlyFunction(this.getConditions());
         }
     }
+
+    //? if 1.20.1 {
+    public static class Serializer extends LootItemConditionalFunction.Serializer<TrimRandomlyFunction> {
+        @Override
+        public TrimRandomlyFunction deserialize(JsonObject object, JsonDeserializationContext deserializationContext, LootItemCondition[] conditions) {
+            return new TrimRandomlyFunction(conditions);
+        }
+    }
+    //?}
 }

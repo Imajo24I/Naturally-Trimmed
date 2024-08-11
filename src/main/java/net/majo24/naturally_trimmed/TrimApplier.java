@@ -18,9 +18,9 @@ import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 import java.util.Iterator;
 
 //? >=1.20.5 {
-import net.minecraft.core.component.DataComponentPatch;
+/*import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
-//?}
+*///?}
 
 public class TrimApplier {
     private TrimApplier() {
@@ -145,10 +145,10 @@ public class TrimApplier {
      */
     public static void applyTrim(ItemStack armorPiece, ArmorTrim armorTrim, RegistryAccess registryAccess) {
         //? >=1.20.5 {
-        armorPiece.applyComponents(DataComponentPatch.builder().set(DataComponents.TRIM, armorTrim).build());
-        //?} else {
-        /*ArmorTrim.setTrim(registryAccess, armorPiece, armorTrim);
-         *///?}
+        /*armorPiece.applyComponents(DataComponentPatch.builder().set(DataComponents.TRIM, armorTrim).build());
+        *///?} else {
+        ArmorTrim.setTrim(registryAccess, armorPiece, armorTrim);
+         //?}
     }
 
     /**
