@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 
 /*? <1.21 {*/
-import net.minecraft.client.gui.screens.OptionsSubScreen;
- /*?} else {*/
-/*import net.minecraft.client.gui.screens.options.OptionsSubScreen;
-*//*?}*/
+/*import net.minecraft.client.gui.screens.OptionsSubScreen;
+ *//*?} else {*/
+import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+/*?}*/
 
 import java.util.List;
 
@@ -196,15 +196,15 @@ public class ConfigScreen {
         }
 
         //? >=1.21 {
-        /*@Override
+        @Override
         protected void addOptions() {
         }
-        *///?}
+        //?}
 
         @Override
         public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             //? <=1.20.1
-            renderDirtBackground(graphics);
+            /*renderDirtBackground(graphics);*/
             super.render(graphics, mouseX, mouseY, delta);
             graphics.drawCenteredString(font, title, width / 2, 5, 0xffffff);
         }

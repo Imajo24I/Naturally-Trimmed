@@ -2,9 +2,9 @@ package net.majo24.naturally_trimmed;
 
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 //? if fabric {
-/*import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-*///?} else if neoforge {
+//?} else if neoforge {
 /*import net.majo24.naturally_trimmed.config.configscreen.screen.ConfigScreenProvider;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
@@ -16,11 +16,11 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.fml.ModLoadingContext;
 ^///?}
 *///?} else {
-import net.minecraftforge.client.ConfigScreenHandler;
+/*import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
-//?}
+*///?}
 
 import net.majo24.naturally_trimmed.config.configscreen.screen.ConfigScreenProvider;
 import net.majo24.naturally_trimmed.config.Config;
@@ -33,8 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
-/*? if forgeLike {*/ @Mod("naturally_trimmed") //?}
-public class NaturallyTrimmed /*? if fabric {*/ /*implements ModInitializer*//*?}*/ {
+/*? if forgeLike {*/ /*@Mod("naturally_trimmed") *///?}
+public class NaturallyTrimmed /*? if fabric {*/ implements ModInitializer/*?}*/ {
     public static final String MOD_ID = "naturally_trimmed";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static final ConfigClassHandler<Config> configHandler = Config.HANDLER;
@@ -44,10 +44,10 @@ public class NaturallyTrimmed /*? if fabric {*/ /*implements ModInitializer*//*?
             ResourceLocation.tryBuild(MOD_ID, "trim_randomly_function"),
             new LootItemFunctionType(
                     //? if >1.20.1 {
-                    /*TrimRandomlyFunction.CODEC
-                     *///?} else {
-                    new TrimRandomlyFunction.Serializer()
-                    //?}
+                    TrimRandomlyFunction.CODEC
+                     //?} else {
+                    /*new TrimRandomlyFunction.Serializer()
+                    *///?}
             ));
 
 
@@ -56,17 +56,17 @@ public class NaturallyTrimmed /*? if fabric {*/ /*implements ModInitializer*//*?
 
         // Register Config Screen
         //? if forgeLike {
-        /*? <1.20.5 {*/
+        /*/^? <1.20.5 {^/
         ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> ConfigScreenProvider.getConfigScreen(parent)));
-        /*?} else {*/
-        /*container.registerExtensionPoint(IConfigScreenFactory.class, getConfigScreen());
-        *//*?}*///?}
+        /^?} else {^/
+        /^container.registerExtensionPoint(IConfigScreenFactory.class, getConfigScreen());
+        ^//^?}^/*///?}
     }
 
     //? if fabric {
-    /*@Override
-            *///?}
+    @Override
+            //?}
     public void onInitialize() {
         configHandler.load();
     }
@@ -79,10 +79,10 @@ public class NaturallyTrimmed /*? if fabric {*/ /*implements ModInitializer*//*?
 
     public static Path getConfigPath() {
         //? if fabric {
-        /*Path configDir = FabricLoader.getInstance().getConfigDir();
-        *///?} else if forgeLike {
-        Path configDir = FMLPaths.CONFIGDIR.get().resolve("naturally_trimmed.json5");
-         //?}
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        //?} else if forgeLike {
+        /*Path configDir = FMLPaths.CONFIGDIR.get().resolve("naturally_trimmed.json5");
+         *///?}
         return configDir.resolve("naturally_trimmed.json5");
     }
 }

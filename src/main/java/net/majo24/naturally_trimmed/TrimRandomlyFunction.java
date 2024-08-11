@@ -30,23 +30,23 @@ import static net.majo24.naturally_trimmed.NaturallyTrimmed.configHandler;
 
 public class TrimRandomlyFunction extends LootItemConditionalFunction {
     //? if >1.20.1 {
-    /*public static final
+    public static final
             //? if >1.20.4 {
-    /^MapCodec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.mapCodec(
-     ^///?} else {
-            /^Codec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.create(
-            ^///?}
+    MapCodec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.mapCodec(
+     //?} else {
+            /*Codec<TrimRandomlyFunction> CODEC = RecordCodecBuilder.create(
+            *///?}
             instance -> commonFields(instance)
                     .apply(instance, TrimRandomlyFunction::new)
     );
-    *///?}
+    //?}
 
     protected TrimRandomlyFunction(
             //? if >1.20.1 {
-            /*List<LootItemCondition>
-             *///?} else {
-            LootItemCondition[]
-            //?}
+            List<LootItemCondition>
+             //?} else {
+            /*LootItemCondition[]
+            *///?}
                     predicates) {
         super(predicates);
     }
@@ -101,11 +101,11 @@ public class TrimRandomlyFunction extends LootItemConditionalFunction {
     }
 
     //? if 1.20.1 {
-    public static class Serializer extends LootItemConditionalFunction.Serializer<TrimRandomlyFunction> {
+    /*public static class Serializer extends LootItemConditionalFunction.Serializer<TrimRandomlyFunction> {
         @Override
         public TrimRandomlyFunction deserialize(JsonObject object, JsonDeserializationContext deserializationContext, LootItemCondition[] conditions) {
             return new TrimRandomlyFunction(conditions);
         }
     }
-    //?}
+    *///?}
 }
