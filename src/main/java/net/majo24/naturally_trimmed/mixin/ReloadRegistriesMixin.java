@@ -34,10 +34,10 @@ public class ReloadRegistriesMixin {
             method = "method_58278", at = @At(value = "INVOKE", target = "Ljava/util/Optional;ifPresent(Ljava/util/function/Consumer;)V")
             //?} else {
             /*//? if fabric {
-            method = "method_51195", at = @At(value = "INVOKE", target = "Ljava/util/Optional;ifPresent(Ljava/util/function/Consumer;)V")
-            //?} else {
-            /^method = "method_51189", at = @At(value = "INVOKE", target = "Ljava/util/Optional;ifPresent(Ljava/util/function/Consumer;)V")
-            ^///?}
+            /^method = "method_51195", at = @At(value = "INVOKE", target = "Ljava/util/Optional;ifPresent(Ljava/util/function/Consumer;)V")
+            ^///?} else {
+            method = "lambda$scheduleElementParse$4", at = @At(value = "INVOKE", target = "Ljava/util/Optional;ifPresent(Ljava/util/function/Consumer;)V")
+            //?}
             *///?}
     )
     private static <T> void modifyTables(Optional<T> optionalTable, Consumer<? super T> action, Operation<Void> original) {
