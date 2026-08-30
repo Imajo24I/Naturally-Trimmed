@@ -49,25 +49,15 @@ public class TrimApplier {
 
     private static final NoSuchElementException noViableTrim = new NoSuchElementException("Couldn't find viable armor trim. Please check configuration (mods, datapacks and Naturally Trimmed config settings) for potential issues. Skipping trim application.");
 
-    /**
-     * Applies the given armor trim onto the given itemStack
-     */
+    /// Helper method, that applies the given armor trim onto the given itemStack
     public static void applyTrim(ItemStack itemStack, ArmorTrim armorTrim) {
         itemStack.applyComponents(DataComponentPatch.builder().set(DataComponents.TRIM, armorTrim).build());
     }
 
     /**
-     * Returns a random but filtered armor trim. The filter is to avoid missing-texture textures. <p>
-     * On clientside:
-     * <p>
-     * The mod will validate the trim by checking for an according texture in the armor trims texture atlas (only possible on the client)
-     * <p>
-     * On serverside:
-     * <ul>
-     *   <li>Ensures at least one of the two trim parts is non-modded (a mod's trim parts are only rarely compatible with another mod's trim parts)</li>
-     *   <li>Ensures the trim pattern isn't added by the elytra trims mod, as elytra trims 4.5 adds patterns from some other mods to the registry even though these mods may not be loaded. This causes the missing-texture texture since elytra trims only adds an elytra-compatible version of the trim.</li>
-     *   <li>Ensures the trim material and pattern aren't blacklisted by the mods blacklists (default is blacklisting tooltrims patterns, as they're only compatible with tools)</li>
-     * </ul>
+     * Returns a random armor trim from a filtered list. <p>
+     * The list is created on the fly using the trim materials and patterns from the according registries. <p>
+     * The filtering can be configured via this mod's config under the `trimFiltering` section
      */
     public static ArmorTrim getRandomTrim(RegistryAccess registryAccess, RandomSource random, List<ItemStack> armorPieces) throws NoSuchElementException {
         List<Holder.Reference<TrimMaterial>> trimMaterials = getTrimMaterials(registryAccess);
@@ -129,9 +119,7 @@ public class TrimApplier {
         throw noViableTrim;
     }
 
-    /**
-     * Runs the selected Trim System on the armor of the entity. Also applies trims to the entity's equipment, if possible.
-     */
+    /// Applies a trim to the entity's armor and equipment
     public static void trimEquipment(LivingEntity entity) {
         if (!INSTANCE.enableTrimMobs) return;
         if (!(INSTANCE.trimMobs.trimChance >= entity.getRandom().nextInt(100))) return;
@@ -174,13 +162,7 @@ public class TrimApplier {
         }
     }
 
-    public static List<Holder.Reference<TrimPattern>> getTrimPatterns(RegistryAccess registryAccess) {
-        //? if >=1.21.11 {
-        return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).listElements().toList());
-        //?} else
-        //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_PATTERN).holders().toList());
-    }
-
+    /// Helper method to get all trim materials from the registry as a list
     public static List<Holder.Reference<TrimMaterial>> getTrimMaterials(RegistryAccess registryAccess) {
         //? if >=1.21.11 {
         return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_MATERIAL).listElements().toList());
@@ -188,10 +170,15 @@ public class TrimApplier {
         //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_MATERIAL).holders().toList());
     }
 
-    /**
-     * Validates the given trim by checking if all relevant textures exist
-     * @return True if trim is valid
-     */
+    /// Helper method to get all trim patterns from the registry as a list
+    public static List<Holder.Reference<TrimPattern>> getTrimPatterns(RegistryAccess registryAccess) {
+        //? if >=1.21.11 {
+        return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).listElements().toList());
+        //?} else
+        //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_PATTERN).holders().toList());
+    }
+
+    /// Checks whether the trim is valid, by ensuring textures aren't missing for that trim
     //? if 1.21.1 {
     /*private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<Holder<ArmorMaterial>> materials) {
         for (Holder<ArmorMaterial> material : materials) {
