@@ -29,8 +29,7 @@ import java.util.*;
 
 import static net.majo24.naturally_trimmed.config.Config.INSTANCE;
 import static net.majo24.naturally_trimmed.config.Config.DEFAULT;
-import static net.minecraft.network.chat.Component.translatable;
-import static net.minecraft.network.chat.Component.literal;
+import static net.minecraft.network.chat.Component.*;
 
 public class ConfigScreen {
     private ConfigScreen() {
@@ -217,7 +216,14 @@ public class ConfigScreen {
                 .tooltip(desc("utils"))
 
                 .option(ButtonOption.createBuilder()
-                        .name((prefixed("utils.openFile")))
+                        .name(prefixed("utils.openWiki"))
+                        .description(optionDesc("utils.openWiki"))
+                        .text(prefixed("utils.run"))
+                        .action((screen, option) -> Util.getPlatform().openUri("https://github.com/Imajo24I/Naturally-Trimmed/wiki"))
+                        .build())
+
+                .option(ButtonOption.createBuilder()
+                        .name(prefixed("utils.openFile"))
                         .description(optionDesc("utils.openFile"))
                         .text(prefixed("utils.run"))
                         .action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
