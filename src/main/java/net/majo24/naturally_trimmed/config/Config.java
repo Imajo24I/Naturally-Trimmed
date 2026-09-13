@@ -70,9 +70,9 @@ public class Config extends ManagedConfig<Config> {
 
     public static class TrimFilteringSubConfig {
         @Entry(comment = """
-                Strategy to filter out trims with a missing texture
-                See ... Wiki Page TODO!
-                Valid values: "TEXTURE_VALIDATION", "PRECAUTIONARY", "NONE"
+                Which strategy to use to filter out trims with a missing texture
+                See 'https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-%E2%80%90-3.6.0#missing-texture-filtering--missingtexturefiltering'
+                Possible values: "TEXTURE_VALIDATION", "PRECAUTIONARY", "NONE"
                 """)
         public MissingTextureFiltering missingTextureFiltering = MissingTextureFiltering.TEXTURE_VALIDATION;
 
@@ -92,8 +92,8 @@ public class Config extends ManagedConfig<Config> {
 
         // Wrap init in `new ArrayList<>()', as List.of() returns immutably. Mutability is required for the migration code
         @Entry(comment = """
-                Filter trims.
-                See 'https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-‐-3.6.0#trim-filter'
+                Filter used to configure, which trims the mod randomly chooses from.
+                See 'https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-‐-3.6.0#trim-filter--trimfilter'
                 """)
         public List<FilterRule> trimFilter = new ArrayList<>(List.of(new FilterRule(FilterRule.Direction.Blacklist, ".*", "tooltrims:.*")));
 

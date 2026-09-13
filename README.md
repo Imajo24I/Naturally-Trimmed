@@ -20,7 +20,7 @@ resulting in a more complete gameplay experience and making armor you find in th
 ## Configuration
 
 All features of this mod have configuration options.\
-See the [config wiki page](https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-%E2%80%90-3.5.0) for more information.
+See the [config wiki page](https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-%E2%80%90-3.6.0) for more information.
 
 ## Dependencies
 
@@ -30,7 +30,7 @@ can be used to access the config screen.
 
 ## Issues and Mod Compatibility
 
-This mod should work with basically all mods.
-
+See [Known Issues and Mod Compatibily in the wiki](https://github.com/Imajo24I/Naturally-Trimmed/wiki/General-%E2%80%90-3.6.0#known-issues-and-mod-compatibility).\
+This mod should work with basically all mods.\
 If you have found any issue, please report the issue to
 the [project's issue tracker](https://github.com/Imajo24I/Naturally-Trimmed/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml).
