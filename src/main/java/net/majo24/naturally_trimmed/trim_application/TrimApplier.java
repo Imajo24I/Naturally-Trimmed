@@ -1,7 +1,7 @@
 package net.majo24.naturally_trimmed.trim_application;
 
 import net.majo24.naturally_trimmed.NaturallyTrimmed;
-import net.majo24.naturally_trimmed.config.Config.TrimMobsSubConfig.TrimSystem;
+import net.majo24.naturally_trimmed.config.Config;
 import net.majo24.naturally_trimmed.config.FilterRule;
 
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.LOGGER;
@@ -21,7 +21,6 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 *///?}
 
-import net.minecraft.IdentifierException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -50,32 +49,29 @@ public class TrimApplier {
 
     private static final NoSuchElementException noViableTrim = new NoSuchElementException("Couldn't find viable armor trim. Please check configuration (mods, datapacks and Naturally Trimmed config settings) for potential issues. Skipping trim application.");
 
-    /**
-     * Applies the given armor trim onto the given itemStack
-     */
+    /// Helper method, that applies the given armor trim onto the given itemStack
     public static void applyTrim(ItemStack itemStack, ArmorTrim armorTrim) {
         itemStack.applyComponents(DataComponentPatch.builder().set(DataComponents.TRIM, armorTrim).build());
     }
 
     /**
-     * Returns a random but filtered armor trim. The filter is to avoid missing-texture textures. <p>
-     * On clientside:
-     * <p>
-     * The mod will validate the trim by checking for an according texture in the armor trims texture atlas (only possible on the client)
-     * <p>
-     * On serverside:
-     * <ul>
-     *   <li>Ensures at least one of the two trim parts is non-modded (a mod's trim parts are only rarely compatible with another mod's trim parts)</li>
-     *   <li>Ensures the trim pattern isn't added by the elytra trims mod, as elytra trims 4.5 adds patterns from some other mods to the registry even though these mods may not be loaded. This causes the missing-texture texture since elytra trims only adds an elytra-compatible version of the trim.</li>
-     *   <li>Ensures the trim material and pattern aren't blacklisted by the mods blacklists (default is blacklisting tooltrims patterns, as they're only compatible with tools)</li>
-     * </ul>
+     * Returns a random armor trim from a filtered list. <p>
+     * The list is created on the fly using the trim materials and patterns from the according registries. <p>
+     * The filtering can be configured via this mod's config under the `trimFiltering` section
      */
     public static ArmorTrim getRandomTrim(RegistryAccess registryAccess, RandomSource random, List<ItemStack> armorPieces) throws NoSuchElementException {
-        List<Holder.Reference<TrimMaterial>> trimMaterials = getFilteredTrimMaterials(registryAccess);
-        List<Holder.Reference<TrimPattern>> trimPatterns = getFilteredTrimPatterns(registryAccess);
+        List<Holder.Reference<TrimMaterial>> trimMaterials = getTrimMaterials(registryAccess);
+        List<Holder.Reference<TrimPattern>> trimPatterns = getTrimPatterns(registryAccess);
+        if (INSTANCE.trimFiltering.vanillaOnly) {
+            trimMaterials.removeIf(material -> !material.key().identifier().getNamespace().equals("minecraft"));
+            trimPatterns.removeIf(pattern -> !pattern.key().identifier().getNamespace().equals("minecraft"));
+        }
 
-        if (NaturallyTrimmed.isClientAvailable && INSTANCE.trimFiltering.textureValidationFiltering) {
-            // === Texture Validation Filtering ===
+        List<FilterRule> filter = INSTANCE.trimFiltering.trimFilter;
+
+        // Falls back to PRECAUTIONARY, if TEXTURE_VALIDATION is not possible in the current environment
+        if (INSTANCE.trimFiltering.missingTextureFiltering.equals(Config.MissingTextureFiltering.TEXTURE_VALIDATION) && NaturallyTrimmed.isClientAvailable) {
+            // === Texture Validation filtering ===
             List<ArmorTrim> trims = Util.toShuffledList(trimMaterials.stream().flatMap(material -> trimPatterns.stream().map(pattern -> new ArmorTrim(material, pattern))), random);
 
             //? if 1.21.1 {
@@ -89,39 +85,44 @@ public class TrimApplier {
             //?}
 
             for (ArmorTrim trim : trims) {
-                if (isValidTrim(atlas, missingSprite, trim, material)) {
+                if (!FilterRule.isTrimBlacklistedByFilter(filter, trim) && isValidTrim(atlas, missingSprite, trim, material)) {
                     return trim;
                 }
             }
-
-            throw noViableTrim;
-
-        } else {
-            // === Precautionary Trim Filtering ===
-            Holder.Reference<TrimMaterial> trimMaterial;
-            Holder.Reference<TrimPattern> trimPattern;
-
+        } else if (!INSTANCE.trimFiltering.missingTextureFiltering.equals(Config.MissingTextureFiltering.NONE)) {
+            // === Precautionary trim filtering ===
             // Ensure no trim patterns added by elytra trims are used
-            trimPatterns.removeIf(pattern -> (isModLoaded("elytratrims") && (!isModLoaded(pattern.key().identifier().getNamespace()) || pattern.key().identifier().getNamespace().equals("elytratrims"))));
+            if (isModLoaded("elytratrims")) {
+                trimPatterns.removeIf(pattern -> !isModLoaded(pattern.key().identifier().getNamespace()) || pattern.key().identifier().getNamespace().equals("elytratrims"));
+            }
 
-            if (trimMaterials.isEmpty() || trimPatterns.isEmpty()) throw noViableTrim;
+            List<ArmorTrim> trims = Util.toShuffledList(trimMaterials.stream().flatMap(material -> trimPatterns.stream().map(pattern -> new ArmorTrim(material, pattern))), random);
+            for (ArmorTrim trim : trims) {
+                String materialNamespace = ((Holder.Reference<?>) trim.material()).key().identifier().getNamespace();
+                String patternNamespace = ((Holder.Reference<?>) trim.pattern()).key().identifier().getNamespace();
 
-            // Ensure at least one of the two trim parts is non-modded
-            do {
-                trimMaterial = Util.getRandom(trimMaterials, random);
-                trimPattern = Util.getRandom(trimPatterns, random);
-            } while (!trimMaterial.key().identifier().getNamespace().equals("minecraft") && !trimPattern.key().identifier().getNamespace().equals("minecraft"));
-
-            return new ArmorTrim(trimMaterial, trimPattern);
+                if ((materialNamespace.equals("minecraft") || patternNamespace.equals("minecraft") || materialNamespace.equals(patternNamespace))
+                        && !FilterRule.isTrimBlacklistedByFilter(filter, trim)) {
+                    return trim;
+                }
+            }
+        } else {
+            // === No additional filtering for missing trims ===
+            List<ArmorTrim> trims = Util.toShuffledList(trimMaterials.stream().flatMap(material -> trimPatterns.stream().map(pattern -> new ArmorTrim(material, pattern))), random);
+            for (ArmorTrim trim : trims) {
+                if (!FilterRule.isTrimBlacklistedByFilter(filter, trim)) {
+                    return trim;
+                }
+            }
         }
+
+        throw noViableTrim;
     }
 
-    /**
-     * Runs the selected Trim System on the armor of the entity. Also applies trims to the entity's equipment, if possible.
-     */
+    /// Applies a trim to the entity's armor and equipment
     public static void trimEquipment(LivingEntity entity) {
         if (!INSTANCE.enableTrimMobs) return;
-        if (INSTANCE.trimMobs.noTrimsChance >= entity.getRandom().nextInt(100)) return;
+        if (!(INSTANCE.trimMobs.trimChance >= entity.getRandom().nextInt(100))) return;
 
         //? if >=1.21.11 {
         List<ItemStack> armor = EquipmentSlotGroup.ARMOR.slots().stream()
@@ -139,13 +140,9 @@ public class TrimApplier {
         RandomSource random = entity.getRandom();
         RegistryAccess registryAccess = entity.level().registryAccess();
 
-        TrimSystem enabledSystem = INSTANCE.trimMobs.trimSystem;
-
         ArmorTrim trim;
         try {
-            trim = (enabledSystem == TrimSystem.RANDOM_TRIMS)
-                    ? getRandomTrim(registryAccess, random, armor)
-                    : getPredefinedTrim(registryAccess, random);
+            trim = getRandomTrim(registryAccess, random, armor);
         } catch (NoSuchElementException err) {
             LOGGER.warn(err.getMessage());
             return;
@@ -153,55 +150,19 @@ public class TrimApplier {
 
         // Apply trim to the armor
         for (ItemStack armorPiece : armor) {
-            if (INSTANCE.trimMobs.trimChance >= random.nextInt(100)) {
+            if (INSTANCE.trimMobs.pieceTrimChance >= random.nextInt(100)) {
                 applyTrim(armorPiece, trim);
             }
         }
 
         // Apply trim to the equipment, if possible
         if ((NaturallyTrimmed.isModLoaded(ToolTrimsCompat.TOOL_TRIMS_ID) || NaturallyTrimmed.isModLoaded(ToolTrimsCompat.TRIMMABLE_TOOLS_ID))
-                && INSTANCE.trimMobs.trimChance >= random.nextInt(100)) {
+                && INSTANCE.trimMobs.pieceTrimChance >= random.nextInt(100)) {
             ToolTrimsCompat.applyTrimToTool(entity.getMainHandItem(), entity.level().registryAccess(), random);
         }
     }
 
-    public static List<Holder.Reference<TrimPattern>> getFilteredTrimPatterns(RegistryAccess registryAccess) {
-        List<Holder.Reference<TrimPattern>> trimPatterns = getTrimPatterns(registryAccess);
-
-        // === Pattern Filters ===
-        List<FilterRule<TrimPattern>> filter = INSTANCE.trimFiltering.patternFilter;
-        trimPatterns.removeIf(pattern -> FilterRule.resolveFilterForBlacklisted(filter, pattern));
-
-        // === Vanilla Only ===
-        if (INSTANCE.trimFiltering.vanillaOnly) {
-            trimPatterns.removeIf(pattern -> !pattern.key().identifier().getNamespace().equals("minecraft"));
-        }
-
-        return trimPatterns;
-    }
-
-    public static List<Holder.Reference<TrimMaterial>> getFilteredTrimMaterials(RegistryAccess registryAccess) {
-        List<Holder.Reference<TrimMaterial>> trimMaterials = getTrimMaterials(registryAccess);
-
-        // === Material Filters ===
-        List<FilterRule<TrimMaterial>> filter = INSTANCE.trimFiltering.materialFilter;
-        trimMaterials.removeIf(material -> FilterRule.resolveFilterForBlacklisted(filter, material));
-
-        // === Vanilla Only ===
-        if (INSTANCE.trimFiltering.vanillaOnly) {
-            trimMaterials.removeIf(material -> !material.key().identifier().getNamespace().equals("minecraft"));
-        }
-
-        return trimMaterials;
-    }
-
-    public static List<Holder.Reference<TrimPattern>> getTrimPatterns(RegistryAccess registryAccess) {
-        //? if >=1.21.11 {
-        return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).listElements().toList());
-        //?} else
-        //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_PATTERN).holders().toList());
-    }
-
+    /// Helper method to get all trim materials from the registry as a list
     public static List<Holder.Reference<TrimMaterial>> getTrimMaterials(RegistryAccess registryAccess) {
         //? if >=1.21.11 {
         return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_MATERIAL).listElements().toList());
@@ -209,10 +170,15 @@ public class TrimApplier {
         //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_MATERIAL).holders().toList());
     }
 
-    /**
-     * Validates the given trim by checking if all relevant textures exist
-     * @return True if trim is valid
-     */
+    /// Helper method to get all trim patterns from the registry as a list
+    public static List<Holder.Reference<TrimPattern>> getTrimPatterns(RegistryAccess registryAccess) {
+        //? if >=1.21.11 {
+        return new ArrayList<>(registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).listElements().toList());
+        //?} else
+        //return new ArrayList<>(registryAccess.registryOrThrow(Registries.TRIM_PATTERN).holders().toList());
+    }
+
+    /// Checks whether the trim is valid, by ensuring textures aren't missing for that trim
     //? if 1.21.1 {
     /*private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<Holder<ArmorMaterial>> materials) {
         for (Holder<ArmorMaterial> material : materials) {
@@ -242,19 +208,4 @@ public class TrimApplier {
         return true;
     }
     //?}
-
-    public static ArmorTrim getPredefinedTrim(RegistryAccess registryAccess, RandomSource random) throws NoSuchElementException {
-        List<TrimData> predefinedTrims = INSTANCE.trimMobs.predefinedTrims;
-        Util.shuffle(predefinedTrims, random);
-
-        for (TrimData predefinedTrim : predefinedTrims) {
-            try {
-                return predefinedTrim.getTrim(registryAccess);
-            } catch (NoSuchElementException | IdentifierException e) {
-                NaturallyTrimmed.LOGGER.error("Failed to load predefined trim '{}' - '{}'. Please ensure this is a valid trim.", predefinedTrim.material(), predefinedTrim.pattern(), e);
-            }
-        }
-
-        throw noViableTrim;
-    }
 }

@@ -2,11 +2,11 @@ package net.majo24.naturally_trimmed.config;
 
 import com.google.gson.*;
 import net.majo24.naturally_trimmed.NaturallyTrimmed;
+import net.majo24.naturally_trimmed.config.core.Deprecated;
 import net.majo24.naturally_trimmed.config.core.Entry;
 import net.majo24.naturally_trimmed.config.core.ManagedConfig;
 import net.majo24.naturally_trimmed.config.core.Schema;
 import net.majo24.naturally_trimmed.config.core.SubConfig;
-import net.majo24.naturally_trimmed.trim_application.TrimData;
 import net.minecraft.world.item.equipment.trim.*;
 
 import java.lang.reflect.ParameterizedType;
@@ -17,10 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-@Schema(1)
+@Schema(2)
 public class Config extends ManagedConfig<Config> {
     private static final Map<Type, Object> typeAdapters = new HashMap<>() {{
-        put(FilterRule.class, new FilterRuleTypeAdapter<>());
+        put(FilterRule.class, new FilterRuleTypeAdapter());
+        put(DisjointedFilterRule.class, new DisjointedFilterRuleTypeAdapter<>());
     }};
 
     public static final Config DEFAULT;
@@ -69,6 +70,14 @@ public class Config extends ManagedConfig<Config> {
 
     public static class TrimFilteringSubConfig {
         @Entry(comment = """
+                Which strategy to use to filter out trims with a missing texture
+                See 'https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-%E2%80%90-3.6.0#missing-texture-filtering--missingtexturefiltering'
+                Possible values: "TEXTURE_VALIDATION", "PRECAUTIONARY", "NONE"
+                """)
+        public MissingTextureFiltering missingTextureFiltering = MissingTextureFiltering.TEXTURE_VALIDATION;
+
+        @Deprecated
+        @Entry(comment = """
                 Enables filtering trims by checking for the corresponding textures of the trim.
                 However, this only works on the client, it will be not be applied on dedicated servers, due to textures not being available on dedicated servers.
                 
@@ -81,6 +90,14 @@ public class Config extends ManagedConfig<Config> {
         @Entry(comment = "Use only vanilla trim materials and patterns")
         public boolean vanillaOnly = false;
 
+        // Wrap init in `new ArrayList<>()', as List.of() returns immutably. Mutability is required for the migration code
+        @Entry(comment = """
+                Filter used to configure, which trims the mod randomly chooses from.
+                See 'https://github.com/Imajo24I/Naturally-Trimmed/wiki/Config-‐-3.6.0#trim-filter--trimfilter'
+                """)
+        public List<FilterRule> trimFilter = new ArrayList<>(List.of(new FilterRule(FilterRule.Direction.Blacklist, ".*", "tooltrims:.*")));
+
+        @Deprecated
         @Entry(comment = """
                 Filter trim materials.
                 
@@ -89,8 +106,9 @@ public class Config extends ManagedConfig<Config> {
                 Example configuration, blacklisting everything but biomes_o_plenty's trim materials and all trim materials that have the c:gold tag:
                 materialFilter: ["+biomes_o_plenty:.*", "+#c:gold", "-.*"]
                 """)
-        public List<FilterRule<TrimMaterial>> materialFilter = new ArrayList<>();
+        public List<DisjointedFilterRule<TrimMaterial>> materialFilter = new ArrayList<>();
 
+        @Deprecated
         @Entry(comment = """
                 Filter trim patterns.
                 
@@ -99,22 +117,28 @@ public class Config extends ManagedConfig<Config> {
                 Example configuration, blacklisting everything but the silence trim pattern
                 patternFilter: ["+minecraft:silence", "-.*"]
                 """)
-        public List<FilterRule<TrimPattern>> patternFilter = List.of(FilterRule.construct("-tooltrims:.*", false));
+        public List<DisjointedFilterRule<TrimPattern>> patternFilter = List.of(DisjointedFilterRule.construct("-tooltrims:.*", false));
     }
 
     public static class TrimMobsSubConfig {
+        @Deprecated
         @Entry(comment = """
                 Select the trim system. Trim systems define how the mod chooses what trims to use.
                 - RANDOM_TRIMS: Randomly chooses the trim to apply to the mob. Filtering from 'trimFiltering' applies to this.
                 - PREDEFINED_TRIMS: Chooses the trim from a list of predefined trims. See 'predefinedTrims'. Filtering from 'trimFiltering' doesn't apply to this.""")
         public TrimSystem trimSystem = TrimSystem.RANDOM_TRIMS;
 
+        @Entry(comment = "Chance of the mob having any trims applied")
+        public int trimChance = 75;
+
+        @Entry(comment = "Chance of each equipment piece having a trim applied. Applies individually to each armor piece after 'trimChance' was positive for the mob")
+        public int pieceTrimChance = 75;
+
+        @Deprecated
         @Entry(comment = "Chance of the mob having no trims at all")
         public int noTrimsChance = 25;
 
-        @Entry(comment = "Chance of each equipment piece having a trim applied. Applies individually to each armor piece.")
-        public int trimChance = 75;
-
+        @Deprecated
         @Entry(comment = """
                 List of predefined trims.
                 
@@ -127,6 +151,7 @@ public class Config extends ManagedConfig<Config> {
                 """)
         public List<TrimData> predefinedTrims = new ArrayList<>();
 
+        /// Deprecated, still needed for migration code
         public enum TrimSystem {
             RANDOM_TRIMS,
             PREDEFINED_TRIMS,
@@ -146,6 +171,12 @@ public class Config extends ManagedConfig<Config> {
         public int minLevel = 3;
     }
 
+    public enum MissingTextureFiltering {
+        TEXTURE_VALIDATION,
+        PRECAUTIONARY,
+        NONE
+    }
+
     // === Misc Stuff ===
 
     /// Will be triggered for schema version migration after any successful load from file
@@ -156,20 +187,70 @@ public class Config extends ManagedConfig<Config> {
             this._version = 1;
         }
 
+        if (this._version == 1) {
+            this._version = 2;
+
+            this.trimMobs.pieceTrimChance = this.trimMobs.trimChance;
+            this.trimMobs.trimChance = 100 - this.trimMobs.noTrimsChance;
+
+            if (!this.trimFiltering.textureValidationFiltering) {
+                this.trimFiltering.missingTextureFiltering = MissingTextureFiltering.PRECAUTIONARY;
+            }
+
+            // The filters and predefined trims were previously mutually exclusive,
+            // but are combined in 3.6.0. As to preserve previous behavior, only migrate the currently active one
+            if (this.trimMobs.trimSystem.equals(TrimMobsSubConfig.TrimSystem.RANDOM_TRIMS)) {
+                this.trimFiltering.materialFilter.forEach(
+                        filter -> this.trimFiltering.trimFilter.addFirst(new FilterRule(
+                                FilterRule.Direction.valueOf(filter.filterDirection().name()),
+                                filter.toString().substring(1), ".*"
+                        ))
+                );
+                this.trimFiltering.patternFilter.forEach(
+                        filter -> this.trimFiltering.trimFilter.addFirst(new FilterRule(
+                                FilterRule.Direction.valueOf(filter.filterDirection().name()),
+                                ".*", filter.toString().substring(1)
+                        ))
+                );
+            } else {
+                this.trimFiltering.trimFilter.addFirst(new FilterRule(FilterRule.Direction.Blacklist, ".*", ".*"));
+                this.trimMobs.predefinedTrims.forEach(trimData -> this.trimFiltering.trimFilter.addFirst(
+                        new FilterRule(FilterRule.Direction.Whitelist, trimData.fullMaterial(), trimData.fullPattern())
+                ));
+            }
+        }
+
         if (saveAfter) {
             this.saveToFile();
         }
     }
 
-    public static class FilterRuleTypeAdapter<T> implements JsonSerializer<FilterRule<T>>, JsonDeserializer<FilterRule<T>> {
+    public static class DisjointedFilterRuleTypeAdapter<T> implements JsonSerializer<DisjointedFilterRule<T>>, JsonDeserializer<DisjointedFilterRule<T>> {
         @Override
-        public JsonElement serialize(FilterRule src, Type type, JsonSerializationContext jsonSerializationContext) {
+        public JsonElement serialize(DisjointedFilterRule src, Type type, JsonSerializationContext jsonSerializationContext) {
             return new JsonPrimitive(src.toString());
         }
 
         @Override
-        public FilterRule<T> deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-            return FilterRule.construct(json.getAsString(), ((ParameterizedType) type).getActualTypeArguments()[0] == TrimMaterial.class);
+        public DisjointedFilterRule<T> deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+            return DisjointedFilterRule.construct(json.getAsString(), ((ParameterizedType) type).getActualTypeArguments()[0] == TrimMaterial.class);
+        }
+    }
+
+    public static class FilterRuleTypeAdapter implements JsonSerializer<FilterRule>, JsonDeserializer<FilterRule> {
+        @Override
+        public JsonElement serialize(FilterRule src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject element = new JsonObject();
+            element.add("direction", new JsonPrimitive(src.direction().toString()));
+            element.add("materialSource", new JsonPrimitive(FilterRule.sourceToString(src.materialSource())));
+            element.add("patternSource", new JsonPrimitive(FilterRule.sourceToString(src.patternSource())));
+            return element;
+        }
+
+        @Override
+        public FilterRule deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject element = json.getAsJsonObject();
+            return new FilterRule(context.deserialize(element.get("direction"), FilterRule.Direction.class), element.get("materialSource").getAsString(), element.get("patternSource").getAsString());
         }
     }
 }

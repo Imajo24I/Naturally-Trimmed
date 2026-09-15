@@ -4,11 +4,9 @@ import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import net.majo24.naturally_trimmed.NaturallyTrimmed;
 import net.majo24.naturally_trimmed.config.Config;
-import net.majo24.naturally_trimmed.trim_application.TrimApplier;
-import net.majo24.naturally_trimmed.trim_application.TrimData;
 import net.majo24.naturally_trimmed.config.FilterRule;
+import net.majo24.naturally_trimmed.trim_application.TrimApplier;
 import net.minecraft.ChatFormatting;
-import net.minecraft.IdentifierException;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Util;
@@ -31,16 +29,14 @@ import java.util.*;
 
 import static net.majo24.naturally_trimmed.config.Config.INSTANCE;
 import static net.majo24.naturally_trimmed.config.Config.DEFAULT;
-import static net.minecraft.network.chat.Component.translatable;
-import static net.minecraft.network.chat.Component.literal;
+import static net.minecraft.network.chat.Component.*;
 
 public class ConfigScreen {
     private ConfigScreen() {
     }
 
-    private static final Formatters.Percentage percentageFormatter = new Formatters.Percentage();
-    private static final Formatters.TrimSystem trimSystemFormatter = new Formatters.TrimSystem();
-
+    private static final PercentageFormatter percentageFormatter = new PercentageFormatter();
+    private static final MissingTextureFilteringFormatter missingTextureFilteringFormatter = new MissingTextureFilteringFormatter();
     private static final String TRANSLATION_KEY_PREFIX = "naturally_trimmed.config.";
     private static final String TRANSLATION_KEY_DESCRIPTION = ".desc";
 
@@ -151,23 +147,12 @@ public class ConfigScreen {
                 .description(optionDesc("trimMobs"))
                 .collapsed(true)
 
-                .option(Option.<Config.TrimMobsSubConfig.TrimSystem>createBuilder()
-                        .name(prefixed("trimMobs.trimSystem"))
-                        .description(optionDesc("trimMobs.trimSystem"))
-                        .binding(DEFAULT.trimMobs.trimSystem,
-                                () -> INSTANCE.trimMobs.trimSystem,
-                                enabledSystem -> INSTANCE.trimMobs.trimSystem = enabledSystem)
-                        .controller(opt -> EnumControllerBuilder.create(opt)
-                                .enumClass(Config.TrimMobsSubConfig.TrimSystem.class)
-                                .formatValue(trimSystemFormatter))
-                        .build())
-
                 .option(Option.<Integer>createBuilder()
-                        .name(prefixed("trimMobs.noTrimsChance"))
-                        .description(optionDesc("trimMobs.noTrimsChance"))
-                        .binding(DEFAULT.trimMobs.noTrimsChance,
-                                () -> INSTANCE.trimMobs.noTrimsChance,
-                                noTrimsChance -> INSTANCE.trimMobs.noTrimsChance = noTrimsChance)
+                        .name(prefixed("trimMobs.trimChance"))
+                        .description(optionDesc("trimMobs.trimChance"))
+                        .binding(DEFAULT.trimMobs.trimChance,
+                                () -> INSTANCE.trimMobs.trimChance,
+                                val -> INSTANCE.trimMobs.trimChance = val)
                         .controller(opt -> IntegerSliderControllerBuilder.create(opt)
                                 .range(0, 100)
                                 .step(1)
@@ -175,11 +160,11 @@ public class ConfigScreen {
                         .build())
 
                 .option(Option.<Integer>createBuilder()
-                        .name(prefixed("trimMobs.trimChance"))
-                        .description(optionDesc("trimMobs.trimChance"))
-                        .binding(DEFAULT.trimMobs.trimChance,
-                                () -> INSTANCE.trimMobs.trimChance,
-                                trimsChance -> INSTANCE.trimMobs.trimChance = trimsChance)
+                        .name(prefixed("trimMobs.pieceTrimChance"))
+                        .description(optionDesc("trimMobs.pieceTrimChance"))
+                        .binding(DEFAULT.trimMobs.pieceTrimChance,
+                                () -> INSTANCE.trimMobs.pieceTrimChance,
+                                val -> INSTANCE.trimMobs.pieceTrimChance = val)
                         .controller(opt -> IntegerSliderControllerBuilder.create(opt)
                                 .range(0, 100)
                                 .step(1)
@@ -193,14 +178,17 @@ public class ConfigScreen {
                 .name(prefixed("filtering"))
                 .tooltip(desc("filtering"))
 
-                .option(Option.<Boolean>createBuilder()
-                        .name(prefixed("filtering.textureValidationFiltering"))
-                        .description(optionDesc("filtering.textureValidationFiltering"))
-                        .binding(DEFAULT.trimFiltering.textureValidationFiltering,
-                                () -> INSTANCE.trimFiltering.textureValidationFiltering,
-                                textureValidationFiltering -> INSTANCE.trimFiltering.textureValidationFiltering = textureValidationFiltering)
-                        .controller(BooleanControllerBuilder::create)
-                        .build())
+                .option(Option.<Config.MissingTextureFiltering>createBuilder()
+                        .name(prefixed("filtering.missingTextureFiltering"))
+                        .description(optionDesc("filtering.missingTextureFiltering"))
+                        .binding(DEFAULT.trimFiltering.missingTextureFiltering,
+                                () -> INSTANCE.trimFiltering.missingTextureFiltering,
+                                val -> INSTANCE.trimFiltering.missingTextureFiltering = val)
+                        .controller(opt -> EnumControllerBuilder.create(opt)
+                                .enumClass(Config.MissingTextureFiltering.class)
+                                .formatValue(missingTextureFilteringFormatter))
+                        .build()
+                )
 
                 .option(Option.<Boolean>createBuilder()
                         .name(prefixed("filtering.vanillaOnly"))
@@ -211,26 +199,11 @@ public class ConfigScreen {
                         .controller(BooleanControllerBuilder::create)
                         .build())
 
-                .group(ListOption.<String>createBuilder()
-                        .name(prefixed("filtering.materialFilter"))
-                        .description(optionDesc("filtering.materialFilter"))
-                        .collapsed(true)
-                        .binding(DEFAULT.trimFiltering.materialFilter.stream().map(FilterRule::toString).toList(),
-                                () -> INSTANCE.trimFiltering.materialFilter.stream().map(FilterRule::toString).toList(),
-                                materialFilters -> INSTANCE.trimFiltering.materialFilter = materialFilters.stream().map(filter -> FilterRule.<TrimMaterial>construct(filter, true)).toList())
-                        .controller(StringControllerBuilder::create)
-                        .initial("")
-                        .build())
-
-                .group(ListOption.<String>createBuilder()
-                        .name(prefixed("filtering.patternFilter"))
-                        .description(optionDesc("filtering.patternFilter"))
-                        .collapsed(true)
-                        .binding(DEFAULT.trimFiltering.patternFilter.stream().map(FilterRule::toString).toList(),
-                                () -> INSTANCE.trimFiltering.patternFilter.stream().map(FilterRule::toString).toList(),
-                                patternFilters -> INSTANCE.trimFiltering.patternFilter = patternFilters.stream().map(pattern -> FilterRule.<TrimPattern>construct(pattern, false)).toList())
-                        .controller(StringControllerBuilder::create)
-                        .initial("")
+                .option(ButtonOption.createBuilder()
+                        .name((prefixed("filtering.trimFilter")))
+                        .description(optionDesc("filtering.trimFilter"))
+                        .text(prefixed("utils.run"))
+                        .action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
                         .build())
                 .build();
     }
@@ -243,7 +216,14 @@ public class ConfigScreen {
                 .tooltip(desc("utils"))
 
                 .option(ButtonOption.createBuilder()
-                        .name((prefixed("utils.openFile")))
+                        .name(prefixed("utils.openWiki"))
+                        .description(optionDesc("utils.openWiki"))
+                        .text(prefixed("utils.run"))
+                        .action((screen, option) -> Util.getPlatform().openUri("https://github.com/Imajo24I/Naturally-Trimmed/wiki"))
+                        .build())
+
+                .option(ButtonOption.createBuilder()
+                        .name(prefixed("utils.openFile"))
                         .description(optionDesc("utils.openFile"))
                         .text(prefixed("utils.run"))
                         .action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
@@ -260,17 +240,10 @@ public class ConfigScreen {
                         .build())
 
                 .option(ButtonOption.createBuilder()
-                        .name(prefixed("utils.validatePredefinedTrims"))
-                        .description(optionDesc("utils.validatePredefinedTrims"))
+                        .name(prefixed("utils.validateTrimFilter"))
+                        .description(optionDesc("utils.validateTrimFilter"))
                         .text(isInWorld ? prefixed("utils.run") : prefixed("utils.run").withStyle(ChatFormatting.STRIKETHROUGH))
-                        .action((screen, option) -> validatePredefinedTrims())
-                        .build())
-
-                .option(ButtonOption.createBuilder()
-                        .name(prefixed("utils.validateBlacklists"))
-                        .description(optionDesc("utils.validateBlacklists"))
-                        .text(isInWorld ? prefixed("utils.run") : prefixed("utils.run").withStyle(ChatFormatting.STRIKETHROUGH))
-                        .action((screen, option) -> validateFilters())
+                        .action((screen, option) -> validateFilter())
                         .build())
                 .build();
     }
@@ -287,112 +260,82 @@ public class ConfigScreen {
         return OptionDescription.of(desc(path));
     }
 
-    public static void validatePredefinedTrims() {
+    public static void validateFilter() {
         LocalPlayer player = Minecraft.getInstance().player;
         ClientLevel level = Minecraft.getInstance().level;
 
         if (level == null || player == null) return;
         RegistryAccess registryAccess = level.registryAccess();
 
-        message(player, literal("\nValidating predefined trims...\n"));
+        message(player, literal("\nValidating trim filter...\n").withStyle(ChatFormatting.UNDERLINE).withStyle(ChatFormatting.BOLD));
 
-        int total = INSTANCE.trimMobs.predefinedTrims.size();
-        int valid = 0;
-        int index = 0;
+        List<FilterRule> filter = INSTANCE.trimFiltering.trimFilter;
+        List<Holder.Reference<TrimMaterial>> materials = TrimApplier.getTrimMaterials(registryAccess);
+        List<Holder.Reference<TrimPattern>> patterns = TrimApplier.getTrimPatterns(registryAccess);
+        List<ArmorTrim> trims = materials.stream().flatMap(material -> patterns.stream().map(pattern -> new ArmorTrim(material, pattern))).toList();
 
-        for (TrimData trimData : INSTANCE.trimMobs.predefinedTrims) {
-            try {
-                trimData.getTrim(registryAccess);
-                valid += 1;
-            } catch (NoSuchElementException | IdentifierException ignored) {
-                message(player, literal("Found invalid trim: \"" + trimData + "\" with index " + index));
-            } finally {
-                index++;
-            }
-        }
+        Map<ArmorTrim, Optional<FilterRule>> trimStates = new HashMap<>();
+        List<FilterRule> unusedRules = new ArrayList<>(filter);
 
-        message(player, literal("\n" + valid + " out of " + total + " trims are valid."));
-        message(player, literal("Done validating predefined trims"));
-    }
+        for (ArmorTrim trim : trims) {
+            Optional<FilterRule> relevantRule = Optional.empty();
 
-    public static void validateFilters() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        ClientLevel level = Minecraft.getInstance().level;
-
-        if (level == null || player == null) return;
-        RegistryAccess registryAccess = level.registryAccess();
-
-        message(player, literal("\nValidating material filter:\n").withStyle(ChatFormatting.UNDERLINE).withStyle(ChatFormatting.BOLD));
-        validateFilterList(TrimApplier.getTrimMaterials(registryAccess).stream().toList(), INSTANCE.trimFiltering.materialFilter, player);
-        message(player, literal("\nDone validating material filter").withStyle(ChatFormatting.UNDERLINE));
-
-        message(player, literal("\nValidating pattern filter:\n").withStyle(ChatFormatting.UNDERLINE).withStyle(ChatFormatting.BOLD));
-        validateFilterList(TrimApplier.getTrimPatterns(registryAccess).stream().toList(), INSTANCE.trimFiltering.patternFilter, player);
-        message(player, literal("\nDone validating pattern filter").withStyle(ChatFormatting.UNDERLINE));
-
-        if (INSTANCE.trimFiltering.vanillaOnly) {
-            message(player, literal("\nNote that all non-vanilla trims are blacklisted through the vanillaOnly config entry"));
-        }
-    }
-
-    private static <T> void validateFilterList(List<Holder.Reference<T>> trimParts, List<FilterRule<T>> filter, LocalPlayer player) {
-        // Trim Part, Filter that applies the trim part
-        Map<Holder.Reference<T>, Optional<FilterRule<T>>> trimStates = new HashMap<>();
-        List<FilterRule<T>> unnecessaryRules = new ArrayList<>(filter);
-
-        for (Holder.Reference<T> trimPart : trimParts) {
-            Optional<FilterRule<T>> relevantRule = Optional.empty();
-            for (FilterRule<T> rule : filter) {
-                if (rule.matches(trimPart) != FilterRule.FilterResult.Irrelevant) {
-                    unnecessaryRules.remove(rule);
+            for (FilterRule rule : filter) {
+                if (rule.matches(trim) != FilterRule.Result.Irrelevant) {
+                    unusedRules.remove(rule);
                     relevantRule = Optional.of(rule);
                     break;
                 }
             }
 
-            trimStates.put(trimPart, relevantRule);
+            trimStates.put(trim, relevantRule);
         }
 
-        message(player, literal("Trim Part -> State -> Rule").withStyle(ChatFormatting.UNDERLINE));
-        for (Map.Entry<Holder.Reference<T>, Optional<FilterRule<T>>> state : trimStates.entrySet()) {
+        message(player, literal("Trim -> State -> Rule (formatted without direction)").withStyle(ChatFormatting.UNDERLINE));
+        for (Map.Entry<ArmorTrim, Optional<FilterRule>> state : trimStates.entrySet()) {
             String filteredState = "Whitelisted";
             String ruleString = "whitelisted by default";
 
             if (state.getValue().isPresent()) {
-                FilterRule<T> rule = state.getValue().get();
-                filteredState = rule.filterDirection.toString() + "ed";
-                ruleString = rule.toString();
+                FilterRule rule = state.getValue().get();
+                filteredState = rule.direction().toString() + "ed";
+                ruleString = FilterRule.sourceToString(rule.materialSource()) + " / " + FilterRule.sourceToString(rule.patternSource());
             }
 
-            message(player, literal(state.getKey().key().identifier() + " -> " + filteredState + " -> " + ruleString));
+            message(player, literal(
+                    state.getKey().material().unwrapKey().get().identifier()
+                            + " / "
+                            + state.getKey().pattern().unwrapKey().get().identifier()
+                            + " -> " + filteredState + " -> " + ruleString
+            ));
         }
 
         message(player, literal("\nChecking for unused rules...").withStyle(ChatFormatting.UNDERLINE));
-        for (FilterRule<T> rule : unnecessaryRules) {
+        for (FilterRule rule : unusedRules) {
             message(player, literal(rule.toString()));
         }
         message(player, literal("Done checking for unused rules").withStyle(ChatFormatting.UNDERLINE));
+
+        message(player, literal("\nNote that due to minecrafts chat history length limitation, the log of the validation will likely not be fully visible. See the log file for the full validation log"));
+
+        message(player, literal("\nDone validating trim filter...\n").withStyle(ChatFormatting.UNDERLINE).withStyle(ChatFormatting.BOLD));
     }
 
-    public static class Formatters {
-        private Formatters() {
+    public static class PercentageFormatter implements ValueFormatter<Integer> {
+        @Override
+        public Component format(Integer value) {
+            return literal(value + "%");
         }
+    }
 
-        public static class Percentage implements ValueFormatter<Integer> {
-            @Override
-            public Component format(Integer value) {
-                return literal(value + "%");
-            }
-        }
-
-        public static class TrimSystem implements ValueFormatter<Config.TrimMobsSubConfig.TrimSystem> {
-            @Override
-            public Component format(Config.TrimMobsSubConfig.TrimSystem selectedSystem) {
-                return switch (selectedSystem) {
-                    case RANDOM_TRIMS -> prefixed("trimMobs.trimSystem.randomTrims");
-                    case PREDEFINED_TRIMS -> prefixed("trimMobs.trimSystem.predefinedTrims");
-                };
-            }
+    public static class MissingTextureFilteringFormatter implements ValueFormatter<Config.MissingTextureFiltering> {
+        @Override
+        public Component format(Config.MissingTextureFiltering value) {
+            return switch (value) {
+                case TEXTURE_VALIDATION -> prefixed("filtering.missingTextureFiltering.textureValidation");
+                case PRECAUTIONARY -> prefixed("filtering.missingTextureFiltering.precautionary");
+                case NONE -> prefixed("filtering.missingTextureFiltering.none");
+            };
         }
     }
 
