@@ -138,9 +138,13 @@ public abstract class ManagedConfig<T> {
                 JsonElement element = this.gson.fromJson(gsonReader, JsonElement.class);
 
                 if (element.isJsonNull()) {
-                    NaturallyTrimmed.LOGGER.warn("Found null value for config field {} while deserializing config file. Using default value instead for this session", name);
+                    NaturallyTrimmed.LOGGER.warn("Found null value for config field '{}' while deserializing config file. Using default value instead for this session", name);
                 } else {
-                    field.set(config, this.gson.fromJson(element, field.getGenericType()));
+                    try {
+                        field.set(config, this.gson.fromJson(element, field.getGenericType()));
+                    } catch (Exception e) {
+                        NaturallyTrimmed.LOGGER.warn("Found malformatted value for config field '{}' while deserializing config file. Using default value instead for this session", name);
+                    }
                 }
             } else {
                 jsonReader.beginObject();
