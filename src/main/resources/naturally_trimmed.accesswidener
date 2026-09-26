@@ -1,3 +1,4 @@
 accessWidener v2 official
 
-accessible class net/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer$TrimSpriteKey
+accessible class net/minecraft/client/resources/palette/PalettedTextureManager$BaseTexture
+accessible field net/minecraft/client/resources/palette/PalettedTextureManager baseTextureCache Lcom/google/common/cache/LoadingCache;

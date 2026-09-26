@@ -8,22 +8,28 @@ import static net.majo24.naturally_trimmed.NaturallyTrimmed.LOGGER;
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.isModLoaded;
 import static net.majo24.naturally_trimmed.config.Config.INSTANCE;
 
-//? if >=1.21.11 {
-import net.minecraft.world.item.equipment.EquipmentAsset;
+//? if >=26.3 {
+import net.minecraft.client.resources.palette.PalettedTextureManager;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
+//?} else if >=1.21.11 {
+/*import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.ResourceKey;
-//?} else {
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+*///?} else {
 /*import net.minecraft.client.renderer.Sheets;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 *///?}
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -74,18 +80,26 @@ public class TrimApplier {
             // === Texture Validation filtering ===
             List<ArmorTrim> trims = Util.toShuffledList(trimMaterials.stream().flatMap(material -> trimPatterns.stream().map(pattern -> new ArmorTrim(material, pattern))), random);
 
-            //? if 1.21.1 {
+            //? if >=26.3 {
+            PalettedTextureManager textureManager = Minecraft.getInstance().getPalettedTextureManager();
+            //?} else if >1.21.1 {
+            /*TextureAtlas atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ARMOR_TRIMS);
+            TextureAtlasSprite missingSprite = atlas.missingSprite();
+            Set<ResourceKey<EquipmentAsset>> equipmentAssets = armorPieces.stream().map(piece -> (piece.get(DataComponents.EQUIPPABLE)).assetId().orElseThrow(() -> noViableTrim)).collect(Collectors.toSet());
+            *///?} else {
             /*TextureAtlas atlas = Minecraft.getInstance().getModelManager().getAtlas(Sheets.ARMOR_TRIMS_SHEET);
             TextureAtlasSprite missingSprite = atlas.getSprite(Identifier.tryBuild("naturally_trimmed", "placeholder"));
-            Set<Holder<ArmorMaterial>> material = armorPieces.stream().map(piece -> ((ArmorItem) piece.getItem()).getMaterial()).collect(Collectors.toSet());
-            *///?} else {
-            TextureAtlas atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ARMOR_TRIMS);
-            TextureAtlasSprite missingSprite = atlas.missingSprite();
-            Set<ResourceKey<EquipmentAsset>> material = armorPieces.stream().map(piece -> (piece.get(DataComponents.EQUIPPABLE)).assetId().orElseThrow(() -> noViableTrim)).collect(Collectors.toSet());
-            //?}
+            Set<Holder<ArmorMaterial>> armorMaterials = armorPieces.stream().map(piece -> ((ArmorItem) piece.getItem()).getMaterial()).collect(Collectors.toSet());
+            *///?}
 
             for (ArmorTrim trim : trims) {
-                if (!FilterRule.isTrimBlacklistedByFilter(filter, trim) && isValidTrim(atlas, missingSprite, trim, material)) {
+                if (!FilterRule.isTrimBlacklistedByFilter(filter, trim)
+                        //? if >= 26.3 {
+                        && isValidTrim(textureManager, trim)) {
+                        //?} else if >1.21.1 {
+                        /*&& isValidTrim(atlas, missingSprite, trim, equipmentAssets)) {
+                        *///?} else
+                        //&& isValidTrim(atlas, missingSprite, trim, armorMaterials)) {
                     return trim;
                 }
             }
@@ -179,21 +193,20 @@ public class TrimApplier {
     }
 
     /// Checks whether the trim is valid, by ensuring textures aren't missing for that trim
-    //? if 1.21.1 {
-    /*private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<Holder<ArmorMaterial>> materials) {
-        for (Holder<ArmorMaterial> material : materials) {
-            TextureAtlasSprite innerTexture = atlas.getSprite(trim.innerTexture(material));
-            TextureAtlasSprite outerTexture = atlas.getSprite(trim.outerTexture(material));
-
-            if (innerTexture.equals(missingSprite) || outerTexture.equals(missingSprite)) {
+    //? if >=26.3 {
+    private static boolean isValidTrim(PalettedTextureManager textureManager, ArmorTrim trim) {
+        for (EquipmentClientInfo.LayerType layer : List.of(EquipmentClientInfo.LayerType.HUMANOID, EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS)) {
+            Identifier baseTexture = trim.pattern().value().assetId().withPath(path -> layer.trimAssetPrefix() + "/" + path);
+            Optional<PalettedTextureManager.BaseTexture> maybeBaseTexture = textureManager.baseTextureCache.getUnchecked(baseTexture);
+            if (maybeBaseTexture.isEmpty()) {
                 return false;
             }
         }
 
         return true;
     }
-    *///?} else {
-    private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<ResourceKey<EquipmentAsset>> equipmentAssets) {
+    //?} else if >1.21.1 {
+    /*private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<ResourceKey<EquipmentAsset>> equipmentAssets) {
         for (EquipmentClientInfo.LayerType layer : List.of(EquipmentClientInfo.LayerType.HUMANOID, EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS)) {
             for (ResourceKey<EquipmentAsset> equipmentAsset : equipmentAssets) {
                 EquipmentLayerRenderer.TrimSpriteKey spriteKey = new EquipmentLayerRenderer.TrimSpriteKey(trim, layer, equipmentAsset);
@@ -207,5 +220,18 @@ public class TrimApplier {
 
         return true;
     }
-    //?}
+    *///?} else {
+    /*private static boolean isValidTrim(TextureAtlas atlas, TextureAtlasSprite missingSprite, ArmorTrim trim, Set<Holder<ArmorMaterial>> materials) {
+        for (Holder<ArmorMaterial> material : materials) {
+            TextureAtlasSprite innerTexture = atlas.getSprite(trim.innerTexture(material));
+            TextureAtlasSprite outerTexture = atlas.getSprite(trim.outerTexture(material));
+
+            if (innerTexture.equals(missingSprite) || outerTexture.equals(missingSprite)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    *///?}
 }

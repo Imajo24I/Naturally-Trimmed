@@ -15,6 +15,8 @@ neoForge {
 
     if (sc.current.version == "1.21.1") {
         setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer_21.1.cfg"))
+    } else if (sc.current.version == "1.21.11" || sc.current.version == "26.1") {
+        setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer_21.11+26.1.cfg"))
     } else {
         setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer.cfg"))
     }

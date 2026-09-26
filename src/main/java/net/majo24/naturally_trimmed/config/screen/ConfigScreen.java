@@ -9,7 +9,6 @@ import net.majo24.naturally_trimmed.trim_application.TrimApplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
@@ -24,6 +23,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.equipment.trim.*;
 import org.jetbrains.annotations.NotNull;
 
+//? if >=26.3 {
+import com.mojang.blaze3d.Blaze3D;
+import java.net.URI;
+//?} else
+//import net.minecraft.util.Util;
 
 import java.util.*;
 
@@ -203,7 +207,10 @@ public class ConfigScreen {
                         .name((prefixed("filtering.trimFilter")))
                         .description(optionDesc("filtering.trimFilter"))
                         .text(prefixed("utils.run"))
-                        .action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
+                        //? if >=26.3 {
+                        .action((screen, option) -> Blaze3D.openPath(NaturallyTrimmed.getConfigPath()))
+                        //? } else
+                        //.action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
                         .build())
                 .build();
     }
@@ -219,14 +226,20 @@ public class ConfigScreen {
                         .name(prefixed("utils.openWiki"))
                         .description(optionDesc("utils.openWiki"))
                         .text(prefixed("utils.run"))
-                        .action((screen, option) -> Util.getPlatform().openUri("https://github.com/Imajo24I/Naturally-Trimmed/wiki"))
+                        //? if >=26.3 {
+                        .action((screen, option) -> Blaze3D.openUri(URI.create("https://github.com/Imajo24I/Naturally-Trimmed/wiki")))
+                        //? } else
+                        //.action((screen, option) -> Util.getPlatform().openUri("https://github.com/Imajo24I/Naturally-Trimmed/wiki"))
                         .build())
 
                 .option(ButtonOption.createBuilder()
                         .name(prefixed("utils.openFile"))
                         .description(optionDesc("utils.openFile"))
                         .text(prefixed("utils.run"))
-                        .action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
+                        //? if >=26.3 {
+                        .action((screen, option) -> Blaze3D.openPath(NaturallyTrimmed.getConfigPath()))
+                        //? } else
+                        //.action((screen, option) -> Util.getPlatform().openPath(NaturallyTrimmed.getConfigPath()))
                         .build())
 
                 .option(ButtonOption.createBuilder()
@@ -355,11 +368,19 @@ public class ConfigScreen {
             addRenderableWidget(messageWidget);
 
             Button openLinkButton = Button.builder(translatable("naturally_trimmed.config.backup_screen.viewOnModrinth"),
-                            button -> minecraft.setScreen(new ConfirmLinkScreen(
+                            //? if >=26.3 {
+                            button -> minecraft.gui.setScreen(new ConfirmLinkScreen(
+                                    open -> {
+                                        if (open) Blaze3D.openUri(URI.create("https://modrinth.com/mod/yacl"));
+                                        minecraft.gui.setScreen(lastScreen);
+                                    }, URI.create("https://modrinth.com/mod/yacl"), true)))
+                            //? } else {
+                            /*button -> minecraft.setScreen(new ConfirmLinkScreen(
                                     open -> {
                                         if (open) Util.getPlatform().openUri("https://modrinth.com/mod/yacl");
                                         minecraft.setScreen(lastScreen);
                                     }, "https://modrinth.com/mod/yacl", true)))
+                            *///?}
                     .pos(width / 2 - 120, height / 2)
                     .size(115, 20)
                     .build();

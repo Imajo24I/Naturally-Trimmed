@@ -9,7 +9,11 @@ group = property("mod.group") as String
 base.archivesName = property("mod.id") as String
 
 loom {
-    accessWidenerPath.set(rootProject.file("src/main/resources/naturally_trimmed.accesswidener"))
+    if (sc.current.version == "26.1") {
+        accessWidenerPath.set(rootProject.file("src/main/resources/naturally_trimmed-26.1.accesswidener"))
+    } else {
+        accessWidenerPath.set(rootProject.file("src/main/resources/naturally_trimmed.accesswidener"))
+    }
 
     mods {
         create("naturally_trimmed") {
@@ -18,8 +22,8 @@ loom {
     }
 
     runConfigs.all {
-        ideConfigGenerated(stonecutter.current.isActive)
-        runDir = "../../run"
+        this.generateRunConfig.set(stonecutter.current.isActive)
+        this.runDirectory.set(file("../../run"))
     }
 }
 
@@ -46,7 +50,7 @@ dependencies {
     implementation("dev.isxander:yet-another-config-lib:${property("deps.yacl")}-fabric")
 
     // Fabric API
-    runtimeOnly("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
 
     // Mod Menu
     implementation("com.terraformersmc:modmenu:${property("deps.modmenu")}")

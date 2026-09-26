@@ -1,6 +1,7 @@
 package net.majo24.naturally_trimmed.trim_application;
 
 //? if >=1.21.11 {
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 //?} else
 //import net.minecraft.world.item.ArmorItem;
@@ -20,12 +21,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static net.majo24.naturally_trimmed.NaturallyTrimmed.LOGGER;
 
 
 public class TrimLootTablesFunction extends LootItemConditionalFunction {
-    protected TrimLootTablesFunction(List<LootItemCondition> predicates) {
+    //? if >=26.3 {
+    protected TrimLootTablesFunction(Optional<Holder<LootItemCondition>> predicates) {
+    //?} else
+    //protected TrimLootTablesFunction(List<LootItemCondition> predicates) {
         super(predicates);
     }
 

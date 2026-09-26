@@ -19,8 +19,8 @@ loom {
     }
 
     runConfigs.all {
-        ideConfigGenerated(stonecutter.current.isActive)
-        runDir = "../../run"
+        this.generateRunConfig.set(stonecutter.current.isActive)
+        this.runDirectory.set(file("../../run"))
     }
 }
 
