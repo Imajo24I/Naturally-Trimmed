@@ -36,3 +36,6 @@ side = "CLIENT"
 
 [[mixins]]
 config = "naturally_trimmed.mixins.json"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer${at_version_suffix}.cfg"

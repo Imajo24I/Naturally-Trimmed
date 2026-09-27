@@ -8,18 +8,17 @@ stonecutter.properties.tags(sc.current.version)
 version = "${property("mod.version")}+${sc.current.version}-neoforge"
 group = property("mod.group") as String
 base.archivesName = property("mod.id") as String
+var atVersionSuffix = when (sc.current.version) {
+    "1.21.1" -> { "_21.1" }
+    "1.21.11", "26.1" -> { "_21.11+26.1" }
+    else -> { "" }
+}
 
 neoForge {
     version = property("deps.neoforge") as String
     validateAccessTransformers = true
 
-    if (sc.current.version == "1.21.1") {
-        setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer_21.1.cfg"))
-    } else if (sc.current.version == "1.21.11" || sc.current.version == "26.1") {
-        setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer_21.11+26.1.cfg"))
-    } else {
-        setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer.cfg"))
-    }
+    setAccessTransformers(rootProject.file("src/main/resources/META-INF/accesstransformer$atVersionSuffix.cfg"))
 
     // Parchment
     if (hasProperty("deps.parchment")) parchment {
@@ -99,6 +98,7 @@ tasks.processResources {
         put("issues_link", property("mod.issues_link"))
         put("yacl", property("deps.yacl"))
         put("neoforge", property("deps.neoforge"))
+        put("at_version_suffix", atVersionSuffix)
     }
 
     props.forEach(inputs::property)
