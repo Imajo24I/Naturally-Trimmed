@@ -113,6 +113,19 @@ tasks {
     }
 }
 
+
+tasks.named("publishMods") {
+    onlyIf("PUBLISH_LOADER_CONSTRAINT excludes this configuration") {
+        val loaderConstraint = providers.environmentVariable("PUBLISH_LOADER_CONSTRAINT")
+        (!loaderConstraint.isPresent || loaderConstraint.get() == "neoforge")
+    }
+
+    onlyIf("PUBLISH_MC_VERSION_CONSTRAINT excludes this configuration") {
+        val mcVersionConstraint = providers.environmentVariable("PUBLISH_MC_VERSION_CONSTRAINT")
+        (!mcVersionConstraint.isPresent || sc.eval(sc.current.version, mcVersionConstraint.get()))
+    }
+}
+
 publishMods {
     displayName = "${property("mod.name")} ${property("mod.version")} for Neoforge ${sc.current.version}"
     file = tasks.jar.map { it.archiveFile.get() }
@@ -126,21 +139,22 @@ publishMods {
     type = STABLE
     modLoaders.add("neoforge")
 
-    dryRun = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null ||
-            providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
+    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN")
+    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+    dryRun = !modrinthToken.isPresent || !curseforgeToken.isPresent
 
     val targets = property("mc.targets").toString().split(", ")
 
     modrinth {
         projectId.set("hHVaPgFK")
-        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+        accessToken = modrinthToken
         minecraftVersions.addAll(targets)
         optional("yacl")
     }
 
     curseforge {
         projectId.set("1005441")
-        accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+        accessToken = curseforgeToken
         minecraftVersions.addAll(targets)
         serverRequired = true
         optional("yacl")

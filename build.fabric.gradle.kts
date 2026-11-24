@@ -98,6 +98,18 @@ tasks.processResources {
     exclude(listOf("META-INF/mods.toml", "META-INF/neoforge.mods.toml"))
 }
 
+tasks.named("publishMods") {
+    onlyIf("PUBLISH_LOADER_CONSTRAINT excludes this configuration") {
+        val loaderConstraint = providers.environmentVariable("PUBLISH_LOADER_CONSTRAINT")
+        (!loaderConstraint.isPresent || loaderConstraint.get() == "fabric")
+    }
+
+    onlyIf("PUBLISH_MC_VERSION_CONSTRAINT excludes this configuration") {
+        val mcVersionConstraint = providers.environmentVariable("PUBLISH_MC_VERSION_CONSTRAINT")
+        (!mcVersionConstraint.isPresent || sc.eval(sc.current.version, mcVersionConstraint.get()))
+    }
+}
+
 publishMods {
     displayName = "${property("mod.name")} ${property("mod.version")} for Fabric ${sc.current.version}"
     file.set(tasks.jar.get().archiveFile)
@@ -111,14 +123,15 @@ publishMods {
     type = STABLE
     modLoaders.add("fabric")
 
-    dryRun = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null ||
-            providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
+    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN")
+    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+    dryRun = !modrinthToken.isPresent || !curseforgeToken.isPresent
 
     val targets = property("mc.targets").toString().split(", ")
 
     modrinth {
         projectId.set("hHVaPgFK")
-        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+        accessToken = modrinthToken
         minecraftVersions.addAll(targets)
         optional("yacl")
         requires("fabric-api")
@@ -127,7 +140,7 @@ publishMods {
 
     curseforge {
         projectId.set("1005441")
-        accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+        accessToken = curseforgeToken
         minecraftVersions.addAll(targets)
         serverRequired = true
         optional("yacl")
