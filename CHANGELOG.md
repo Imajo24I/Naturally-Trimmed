@@ -1,1 +1,1 @@
-- Fixed neoforge <26.3 crashing upon world creation ([#55](https://github.com/Imajo24I/Naturally-Trimmed/issues/55))
+- Fixed fabric 26.1.x and 26.2 crashing when trying to apply trims
