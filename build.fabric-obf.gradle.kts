@@ -106,15 +106,21 @@ tasks.processResources {
     exclude(listOf("META-INF/mods.toml", "META-INF/neoforge.mods.toml"))
 }
 
-tasks.named("publishMods") {
-    onlyIf("PUBLISH_LOADER_CONSTRAINT excludes this configuration") {
-        val loaderConstraint = providers.environmentVariable("PUBLISH_LOADER_CONSTRAINT")
-        (!loaderConstraint.isPresent || loaderConstraint.get() == "fabric")
-    }
+allprojects {
+    tasks.configureEach {
+        if (name in setOf("publishMods", "publishModrinth", "publishCurseforge")) {
+            onlyIf("PUBLISH_LOADER_CONSTRAINT excludes this configuration") {
+                //val loaderConstraint = providers.environmentVariable("PUBLISH_LOADER_CONSTRAINT")
+                val loaderConstraint = providers.provider { "fabric" }
+                (!loaderConstraint.isPresent || loaderConstraint.get() == "fabric")
+            }
 
-    onlyIf("PUBLISH_MC_VERSION_CONSTRAINT excludes this configuration") {
-        val mcVersionConstraint = providers.environmentVariable("PUBLISH_MC_VERSION_CONSTRAINT")
-        (!mcVersionConstraint.isPresent || sc.eval(sc.current.version, mcVersionConstraint.get()))
+            onlyIf("PUBLISH_MC_VERSION_CONSTRAINT excludes this configuration") {
+                //val mcVersionConstraint = providers.environmentVariable("PUBLISH_MC_VERSION_CONSTRAINT")
+                val mcVersionConstraint = providers.provider { "26.1" }
+                (!mcVersionConstraint.isPresent || sc.eval(sc.current.version, mcVersionConstraint.get()))
+            }
+        }
     }
 }
 
