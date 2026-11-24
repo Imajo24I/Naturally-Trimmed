@@ -80,11 +80,16 @@ tasks.processResources {
         put("description", property("mod.description"))
         put("github_link", property("mod.github_link"))
         put("issues_link", property("mod.issues_link"))
-        put("aw_path", "naturally_trimmed.accesswidener")
         put("mc", property("mc.dep"))
         put("yacl", property("deps.yacl"))
         put("modmenu", property("deps.modmenu"))
         put("fabric_api", property("deps.fabric_api"))
+
+        if (sc.current.version == "26.1") {
+            put("aw_path", "naturally_trimmed-26.1.accesswidener")
+        } else {
+            put("aw_path", "naturally_trimmed.accesswidener")
+        }
     }
 
     props.forEach(inputs::property)
